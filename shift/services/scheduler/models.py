@@ -1,3 +1,4 @@
+from itertools import product
 from typing import Iterable
 from ortools.sat.python import cp_model
 from shift.domain.model import DomainModel
@@ -14,7 +15,7 @@ class ConstraintModel:
         self._workers = workers
         self._shifts = shifts
         self._reps: Iterable[Repeat] = [
-            Repeat(repetition, repetition) for repetition in repetitions
+            Repeat(repetition, repetition) for repetition in range(repetitions)
         ]
         self._model = cp_model.CpModel()
         self._vars = {}
@@ -36,16 +37,14 @@ class ConstraintModel:
     def _create_vars(
         workers: Iterable[Worker], shifts: Iterable[Shift], rep: Iterable[Repeat]
     ):
-        for worker in workers:
-            for shift in shifts:
-                for r in rep:
-                    yield (worker.id, shift.id, r)
+        for var in product(workers, shifts, rep):
+            yield create_key(*var)
 
 
 def create_key(*vars: Iterable[DomainModel]):
     key = []
     for var in vars:
-        key.append((var.id, var))
+        key.append((var.id, var.domain))
 
 
 if __name__ == "__main__":
@@ -54,3 +53,4 @@ if __name__ == "__main__":
     cm = ConstraintModel(workers, shifts, 1)
     cm.add_vars_to_model()
     cm.add_constraints_to_model()
+    cm
