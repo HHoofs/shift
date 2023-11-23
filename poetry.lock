@@ -123,6 +123,20 @@ docs = ["Sphinx"]
 test = ["objgraph", "psutil"]
 
 [[package]]
+name = "holidays"
+version = "0.37"
+description = "Generate and work with holidays in Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "holidays-0.37-py3-none-any.whl", hash = "sha256:5b8ff8c94c06e3b225762d495e51b8e51205d332f8ad092aab809c4bffa8d123"},
+    {file = "holidays-0.37.tar.gz", hash = "sha256:712df71a8d97b04554fa1c9208d219fbf174bad2864263bef24c6dcfa1ded6ff"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 description = "brain-dead simple config-ini parsing"
@@ -604,4 +618,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "edf3aa6201344a10a286daac49ad728327590c276ad7609893e77f7c3dd306bb"
+content-hash = "fd85e9eb742da2c8169649ac98b8a425d271c82b4138dedb1a266cd83651282d"

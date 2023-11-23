@@ -34,13 +34,13 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
         self._solution_count += 1
         print(f"Solution {self._solution_count}")
         for day in self._days:
-            print(f"Day {day.day}")
+            print(day)
             for worker in self._workers:
                 is_working = False
                 for shift in self._shifts:
                     if self.Value(self._vars[create_key(day, worker, shift)]):
                         is_working = True
-                        print(f"  Worker {worker.name} works shift {shift.part}")
+                        print(f"  {worker} works {shift} shift")
                 if not is_working:
                     print(f"  Worker {worker.name} does not work")
         if self._solution_count >= self._solution_limit:
