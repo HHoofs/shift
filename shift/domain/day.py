@@ -26,8 +26,8 @@ class Day(DomainModel):
     @property
     def is_holiday(self) -> bool:
         return self.date in holidays.NL()
-    
+
     def __repr__(self) -> str:
         _day = self.date.strftime("%A %-d %B")
         _week = self.date.isocalendar()[1]
-        return f'{_day} (week: {_week})'
+        return f"{_day} (week: {_week})"
