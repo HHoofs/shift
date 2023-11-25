@@ -88,7 +88,7 @@ class ConstraintModel:
 
     def optimize_goal(self):
         for worker in self._workers:
-            for weekday in range(1, 8):
+            for weekday in range(1, 6):
                 for shift in self._shifts:
                     _key = worker.name, weekday, shift.block.value
                     self._varx[_key] = self.model.NewBoolVar("var" + str(_key))
