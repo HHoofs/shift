@@ -15,3 +15,6 @@ class Shift(DomainModel):
 
     def __repr__(self) -> str:
         return self.block.name
+
+    def __lt__(self, other):
+        return self.block.value < other.block.value

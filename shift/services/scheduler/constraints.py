@@ -79,7 +79,7 @@ def shift_on_day(
         if include:
             model.AddExactlyOne(_vars)
         else:
-            model.Add(sum(_vars) <= 0)    
+            model.Add(sum(_vars) <= 0)
 
 
 def subsequent_shifts(
@@ -124,13 +124,13 @@ def _consecutive_days(
         raise ValueError("All sets of weekdays should have the same length")
     weekdays = [sorted(_weekday) for _weekday in weekdays]
 
-    for days_inclusive in _tee(sorted(days), n_weekdays.pop()):
-        if (day.weekday for day in days_inclusive) in weekdays:
-            return days_inclusive
+    n = n_weekdays.pop()
+    for days_inclusive in _tee(sorted(days), n):
+        if list(day.weekday for day in days_inclusive) in weekdays:
+            yield days_inclusive
 
 
 def _tee(days: Iterable[Day], n: int = 2) -> Iterable[Tuple[Day, ...]]:
-    n = int
     days_tee = itertools.tee(days, n)
     for i in range(1, n):
         for _ in range(i):

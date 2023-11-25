@@ -1,3 +1,5 @@
+from collections import defaultdict
+import csv
 from typing import Iterable
 from ortools.sat.python import cp_model
 
@@ -33,16 +35,39 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
     def on_solution_callback(self):
         self._solution_count += 1
         print(f"Solution {self._solution_count}")
-        for day in self._days:
-            print(day)
-            for worker in self._workers:
-                is_working = False
-                for shift in self._shifts:
-                    if self.Value(self._vars[create_key(day, worker, shift)]):
-                        is_working = True
-                        print(f"  {worker} works {shift} shift")
-                if not is_working:
-                    print(f"  Worker {worker.name} does not work")
+        with open("test.csv", "w") as csv_file:
+            writer = csv.writer(csv_file, delimiter=",")
+            worker_shifts = defaultdict(list)
+            for day in self._days:
+                print(day)
+                if day.weekday == 1:
+                    if worker_shifts:
+                        for worker in self._workers:
+                            if worker_shifts[worker.name]:
+                                writer.writerow(
+                                    [worker.name] + worker_shifts[worker.name]
+                                )
+                    writer.writerow(
+                        [
+                            day.date.isocalendar()[1],
+                            "Ma",
+                            "Di",
+                            "Wo",
+                            "Do",
+                            "Vr",
+                            "Za",
+                            "Zo",
+                        ]
+                    )
+                    worker_shifts = defaultdict(list)
+                for worker in self._workers:
+                    worker_planned = ""
+                    for shift in self._shifts:
+                        if self.Value(self._vars[create_key(day, worker, shift)]):
+                            print(f"  {worker} works {shift} shift")
+                            worker_planned = shift
+                    worker_shifts[worker.name].append(worker_planned)
+
         if self._solution_count >= self._solution_limit:
             print(f"Stop search after {self._solution_limit} solutions")
             self.StopSearch()

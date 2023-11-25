@@ -5,5 +5,5 @@ def create_solver() -> CpSolver:
     solver = CpSolver()
     solver.parameters.linearization_level = 0
     # Enumerate all solutions.
-    solver.parameters.enumerate_all_solutions = True
+    solver.parameters.enumerate_all_solutions = False
     return solver
