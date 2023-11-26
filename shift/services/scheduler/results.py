@@ -63,7 +63,9 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
                 for worker in self._workers:
                     worker_planned = ""
                     for shift in self._shifts:
-                        if self.Value(self._vars[create_key(day, worker, shift)]):
+                        if self.Value(
+                            self._vars[create_key(day, worker, shift)]
+                        ):
                             print(f"  {worker} works {shift} shift")
                             worker_planned = shift
                     worker_shifts[worker.name].append(worker_planned)

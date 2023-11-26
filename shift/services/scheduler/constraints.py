@@ -27,7 +27,9 @@ def workers_per_shift(
         )
 
     for key in product(*args):
-        model.AddExactlyOne(vars[create_key(worker, *key)] for worker in workers)
+        model.AddExactlyOne(
+            vars[create_key(worker, *key)] for worker in workers
+        )
 
 
 def shifts_per_day(
@@ -94,7 +96,9 @@ def subsequent_shifts(
         for worker in workers:
             model.AddAtMostOne(
                 vars[create_key(worker, _day, _shift)]
-                for (_day, _shift) in zip(subsequent_days, (max(shifts), min(shifts)))
+                for (_day, _shift) in zip(
+                    subsequent_days, (max(shifts), min(shifts))
+                )
             )
 
 
@@ -130,14 +134,17 @@ def subsequent_weeks(
     current_week = list(current_week)
     _, next_week = next(days_in_week)
     next_week = list(next_week)
-    for i in range(24):
+    for _ in range(max(day.weeknumber for day in days) - 2):
         for worker in workers:
-            _sum = sum(
-                vars[create_key(worker, _day, _shift)]
-                for _day, _shift in product(current_week + next_week, shifts)
-                if _day.weekday in weekdays
-            )
-            model.Add(_sum <= n)
+            for _weekdays in weekdays:
+                _sum = sum(
+                    vars[create_key(worker, _day, _shift)]
+                    for _day, _shift in product(
+                        current_week + next_week, shifts
+                    )
+                    if _day.weekday in _weekdays
+                )
+                model.Add(_sum <= n)
         current_week = next_week
         _, next_week = next(days_in_week)
         next_week = list(next_week)

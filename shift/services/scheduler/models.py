@@ -19,7 +19,10 @@ from shift.services.scheduler.utils import create_key
 
 class ConstraintModel:
     def __init__(
-        self, workers: Iterable[Worker], shifts: Iterable[Shift], days: Iterable[Day]
+        self,
+        workers: Iterable[Worker],
+        shifts: Iterable[Shift],
+        days: Iterable[Day],
     ) -> None:
         self._workers = workers
         self._shifts = shifts
@@ -74,7 +77,9 @@ class ConstraintModel:
             [
                 (day_0, day_1, day_2)
                 for day_0, day_1, day_2 in zip(
-                    range(1, 8), list(range(2, 8)) + [1], list(range(3, 8)) + [1, 2]
+                    range(1, 8),
+                    list(range(2, 8)) + [1],
+                    list(range(3, 8)) + [1, 2],
                 )
             ],
             self._workers,
@@ -92,7 +97,13 @@ class ConstraintModel:
         )
 
         subsequent_weeks(
-            self.model, self._vars, 1, self._days, (6, 7), self._workers, self._shifts
+            self.model,
+            self._vars,
+            1,
+            self._days,
+            [(6, 7)],
+            self._workers,
+            self._shifts,
         )
 
         subsequent_weeks(
@@ -100,13 +111,15 @@ class ConstraintModel:
             self._vars,
             1,
             self._days,
-            (5,),
+            [(1,), (2,), (3,), (4,), (5,)],
             self._workers,
             self._shifts[-1:],
         )
 
     def add_distribution(self):
-        total_working_hours = sum(worker.contract_hours for worker in self._workers)
+        total_working_hours = sum(
+            worker.contract_hours for worker in self._workers
+        )
         for worker in self._workers:
             n_shifts(
                 self.model,
@@ -140,7 +153,11 @@ class ConstraintModel:
                 self._vars,
                 worker,
                 self._shifts,
-                [_day for _day in self._days if _day.is_weekend or _day.weekday == 5],
+                [
+                    _day
+                    for _day in self._days
+                    if _day.is_weekend or _day.weekday == 5
+                ],
                 total_working_hours,
                 total_working_hours / len(self._workers),
             )

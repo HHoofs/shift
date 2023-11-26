@@ -26,7 +26,8 @@ def n_shifts(
         min_shifts, max_shifts = floor(worker_shifts), ceil(worker_shifts)
     min_shifts, max_shifts = min_shifts - wiggle, max_shifts + wiggle
     worker_shifts = [
-        vars[create_key(worker, _shift, _day)] for _shift, _day in product(shifts, days)
+        vars[create_key(worker, _shift, _day)]
+        for _shift, _day in product(shifts, days)
     ]
     model.Add(min_shifts <= sum(worker_shifts))
     model.Add(sum(worker_shifts) <= max_shifts)
@@ -46,7 +47,9 @@ def n_shifts_month(
     worker_monthly_shifts = worker_shifts / len(months)
 
     if worker_monthly_shifts.is_integer():
-        min_shifts, max_shifts = int(worker_monthly_shifts), int(worker_monthly_shifts)
+        min_shifts, max_shifts = int(worker_monthly_shifts), int(
+            worker_monthly_shifts
+        )
     else:
         min_shifts, max_shifts = floor(worker_monthly_shifts), ceil(
             worker_monthly_shifts
