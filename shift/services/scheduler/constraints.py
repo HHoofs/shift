@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import groupby, product
 import itertools
 from typing import Iterable, Mapping, Tuple
 from shift.domain.day import Day, WeekDay
@@ -114,6 +114,33 @@ def subsequent_days(
                 for (_day, _shift) in product(_days, shifts)
             )
             model.Add(_sum <= n)
+
+
+def subsequent_weeks(
+    model: cp_model.CpModel,
+    vars: Mapping[str, cp_model.LinearExprT],
+    n: int,
+    days: Iterable[Day],
+    weekdays: Iterable[Tuple[WeekDay, WeekDay]],
+    workers: Iterable[Worker],
+    shifts: Iterable[Shift],
+):
+    days_in_week = groupby(days, lambda day: day.weeknumber)
+    _, current_week = next(days_in_week)
+    current_week = list(current_week)
+    _, next_week = next(days_in_week)
+    next_week = list(next_week)
+    for i in range(24):
+        for worker in workers:
+            _sum = sum(
+                vars[create_key(worker, _day, _shift)]
+                for _day, _shift in product(current_week + next_week, shifts)
+                if _day.weekday in weekdays
+            )
+            model.Add(_sum <= n)
+        current_week = next_week
+        _, next_week = next(days_in_week)
+        next_week = list(next_week)
 
 
 def _consecutive_days(

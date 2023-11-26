@@ -9,6 +9,7 @@ from shift.domain.worker import Worker
 from shift.services.scheduler.constraints import (
     subsequent_days,
     subsequent_shifts,
+    subsequent_weeks,
     workers_per_shift,
     shifts_per_day,
 )
@@ -37,13 +38,13 @@ class ConstraintModel:
 
     def add_constraints_to_model(self):
         workers_per_shift(
-            self._model, self._vars, self._workers, 1, self._shifts, self._days
+            self.model, self._vars, self._workers, 1, self._shifts, self._days
         )
         shifts_per_day(
-            self._model, self._vars, self._shifts, 1, self._days, self._workers
+            self.model, self._vars, self._shifts, 1, self._days, self._workers
         )
         subsequent_shifts(
-            self._model,
+            self.model,
             self._vars,
             self._days,
             [self._shifts[-1]],
@@ -54,7 +55,7 @@ class ConstraintModel:
             workers=self._workers,
         )
         subsequent_shifts(
-            self._model,
+            self.model,
             self._vars,
             self._days,
             self._shifts,
@@ -66,7 +67,7 @@ class ConstraintModel:
         )
 
         subsequent_days(
-            self._model,
+            self.model,
             self._vars,
             2,
             self._days,
@@ -81,13 +82,33 @@ class ConstraintModel:
         )
 
         subsequent_days(
-            self._model,
+            self.model,
             self._vars,
             1,
             self._days,
             [(6, 7)],
             self._workers,
             self._shifts,
+        )
+
+        subsequent_weeks(
+            self.model,
+            self._vars,
+            1,
+            self._days,
+            (6,7),
+            self._workers,
+            self._shifts
+        )
+
+        subsequent_weeks(
+            self.model,
+            self._vars,
+            1,
+            self._days,
+            (5,),
+            self._workers,
+            self._shifts[-1:]
         )
 
     def add_distribution(self):
