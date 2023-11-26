@@ -26,7 +26,7 @@ class Day(DomainModel):
     @property
     def is_holiday(self) -> bool:
         return self.date in holidays.NL()
-    
+
     @property
     def weeknumber(self) -> int:
         return self.date.isocalendar()[1]

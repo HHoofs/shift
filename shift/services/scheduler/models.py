@@ -92,13 +92,7 @@ class ConstraintModel:
         )
 
         subsequent_weeks(
-            self.model,
-            self._vars,
-            1,
-            self._days,
-            (6,7),
-            self._workers,
-            self._shifts
+            self.model, self._vars, 1, self._days, (6, 7), self._workers, self._shifts
         )
 
         subsequent_weeks(
@@ -108,7 +102,7 @@ class ConstraintModel:
             self._days,
             (5,),
             self._workers,
-            self._shifts[-1:]
+            self._shifts[-1:],
         )
 
     def add_distribution(self):
