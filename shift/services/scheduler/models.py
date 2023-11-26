@@ -7,10 +7,12 @@ from shift.domain.day import Day
 from shift.domain.shift import Shift
 from shift.domain.worker import Worker
 from shift.services.scheduler.constraints import (
+    subsequent_days,
     subsequent_shifts,
     workers_per_shift,
     shifts_per_day,
 )
+from shift.services.scheduler.distribution import n_shifts, n_shifts_month
 from shift.services.scheduler.utils import create_key
 
 
@@ -47,7 +49,7 @@ class ConstraintModel:
             [self._shifts[-1]],
             [
                 (day, next_day)
-                for day, next_day in zip(range(1, 7), list(range(2, 7)) + [1])
+                for day, next_day in zip(range(1, 8), list(range(2, 8)) + [1])
             ],
             workers=self._workers,
         )
@@ -63,43 +65,94 @@ class ConstraintModel:
             workers=self._workers,
         )
 
+        subsequent_days(
+            self._model,
+            self._vars,
+            2,
+            self._days,
+            [
+                (day_0, day_1, day_2)
+                for day_0, day_1, day_2 in zip(
+                    range(1, 8), list(range(2, 8)) + [1], list(range(3, 8)) + [1, 2]
+                )
+            ],
+            self._workers,
+            self._shifts,
+        )
+
+        subsequent_days(
+            self._model,
+            self._vars,
+            1,
+            self._days,
+            [(6, 7)],
+            self._workers,
+            self._shifts,
+        )
+
     def add_distribution(self):
         total_working_hours = sum(worker.contract_hours for worker in self._workers)
-        total_shifts = len(self._days) * len(self._shifts)
         for worker in self._workers:
-            n_shifts = worker.contract_hours / total_working_hours * total_shifts
-            if n_shifts.is_integer():
-                min_shifts, max_shifts = int(n_shifts), int(n_shifts)
-            else:
-                min_shifts, max_shifts = floor(n_shifts), ceil(n_shifts)
-            worker_shifts = [
-                self._vars[create_key(worker, _shift, _day)]
-                for _shift, _day in product(self._shifts, self._days)
-            ]
-            self.model.Add(min_shifts <= sum(worker_shifts))
-            self.model.Add(sum(worker_shifts) <= max_shifts)
+            n_shifts(
+                self.model,
+                self._vars,
+                worker,
+                self._shifts,
+                self._days,
+                total_working_hours,
+                worker.contract_hours,
+            )
+            n_shifts(
+                self.model,
+                self._vars,
+                worker,
+                self._shifts[-1:],
+                self._days,
+                total_working_hours,
+                worker.contract_hours,
+            )
+            n_shifts(
+                self.model,
+                self._vars,
+                worker,
+                self._shifts[-1:],
+                [_day for _day in self._days if not _day.weekday < 5],
+                total_working_hours,
+                worker.contract_hours,
+            )
+            n_shifts(
+                self.model,
+                self._vars,
+                worker,
+                self._shifts,
+                [_day for _day in self._days if _day.is_weekend or _day.weekday == 5],
+                total_working_hours,
+                total_working_hours / len(self._workers),
+            )
 
-            worker_late_shifts = [
-                self._vars[create_key(worker, self._shifts[-1], _day)]
-                for _day in self._days
-            ]
-            self.model.Add(min_shifts // 2 <= sum(worker_late_shifts))
-            self.model.Add(sum(worker_late_shifts) <= max_shifts // 2)
+            n_shifts_month(
+                self.model,
+                self._vars,
+                worker,
+                self._shifts,
+                self._days,
+                total_working_hours,
+            )
 
     def optimize_goal(self):
+        # Weekenden niet opeenvolgend
         for worker in self._workers:
-            for weekday in range(1, 6):
-                for shift in self._shifts:
-                    _key = worker.name, weekday, shift.block.value
-                    self._varx[_key] = self.model.NewBoolVar("var" + str(_key))
-                    self.model.AddMaxEquality(
-                        self._varx[_key],
-                        [
-                            self._vars[create_key(worker, shift, day)]
-                            for day in self._days
-                            if day.weekday == weekday
-                        ],
-                    )
+            for weekday in range(1, 5):
+                _key = worker.name, weekday
+                self._varx[_key] = self.model.NewBoolVar("var" + str(_key))
+                self.model.AddMaxEquality(
+                    self._varx[_key],
+                    [
+                        self._vars[create_key(worker, shift, day)]
+                        for day, shift in product(self._days, self._shifts)
+                        if day.weekday == weekday
+                    ],
+                )
 
         self.model.Minimize(sum(var_x for var_x in self._varx.values()))
 

@@ -1,6 +1,6 @@
 from itertools import product
 import itertools
-from typing import Iterable, Mapping, Optional, Tuple
+from typing import Iterable, Mapping, Tuple
 from shift.domain.day import Day, WeekDay
 from shift.domain.model import DomainModel
 from ortools.sat.python import cp_model
