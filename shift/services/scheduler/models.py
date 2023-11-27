@@ -29,7 +29,6 @@ class ConstraintModel:
         self._days = days
         self._model = cp_model.CpModel()
         self._vars = {}
-        self._varx = {}
 
     @property
     def model(self) -> cp_model.CpModel:
@@ -172,21 +171,42 @@ class ConstraintModel:
             )
 
     def optimize_goal(self):
-        # Weekenden niet opeenvolgend
+        var_m = {}
+        var_x = {}
+
         for worker in self._workers:
+            var_m[worker] = self.model.NewIntVar(
+                -50, 50, "var_m" + str(worker)
+            )
+            _days = []
             for weekday in range(1, 5):
                 _key = worker.name, weekday
-                self._varx[_key] = self.model.NewBoolVar("var" + str(_key))
+                var_x[_key] = self.model.NewBoolVar("var_x" + str(_key))
                 self.model.AddMaxEquality(
-                    self._varx[_key],
+                    var_x[_key],
                     [
                         self._vars[create_key(worker, shift, day)]
                         for day, shift in product(self._days, self._shifts)
                         if day.weekday == weekday
                     ],
                 )
+                _days.append(
+                    sum(
+                        self._vars[create_key(worker, shift, day)]
+                        for day, shift in product(self._days, self._shifts)
+                        if day.weekday == weekday
+                    )
+                )
 
-        self.model.Minimize(sum(var_x for var_x in self._varx.values()))
+            self.model.AddMaxEquality(var_m[worker], _days)
+            self.model.Add(
+                sum(var_x[(worker.name, _weekday)] for _weekday in range(1, 5)) < 4
+            )
+
+        self.model.Minimize(
+            sum(v_x for v_x in var_x.values())
+            + sum(-v_m for v_m in var_m.values())
+        )
 
     @staticmethod
     def _create_vars(
