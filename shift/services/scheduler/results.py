@@ -1,11 +1,12 @@
-from collections import defaultdict
 import csv
+from collections import defaultdict
 from typing import Iterable
+
 from ortools.sat.python import cp_model
 
 from shift.domain.day import Day
-from shift.domain.shift import Shift
-from shift.domain.worker import Worker
+from shift.domain.employee import Employee
+from shift.domain.shift import Period
 from shift.services.scheduler.models import ConstraintModel, create_key
 
 
@@ -15,8 +16,8 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
     def __init__(
         self,
         vars,
-        workers: Iterable[Worker],
-        shifts: Iterable[Shift],
+        workers: Iterable[Employee],
+        shifts: Iterable[Period],
         days: Iterable[Day],
         limit: int = 5,
     ):
@@ -40,7 +41,7 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
             worker_shifts = defaultdict(list)
             for day in self._days:
                 print(day)
-                if day.weekday == 1:
+                if day.week_day == 1:
                     if worker_shifts:
                         for worker in self._workers:
                             if worker_shifts[worker.name]:

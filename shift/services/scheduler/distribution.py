@@ -1,9 +1,10 @@
 from itertools import groupby, product
 from math import ceil, floor
 from typing import Iterable, Mapping
-from ortools.sat.python import cp_model
-from shift.domain.day import Day
 
+from ortools.sat.python import cp_model
+
+from shift.domain.day import Day
 from shift.services.scheduler.utils import create_key
 
 

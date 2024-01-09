@@ -1,15 +1,16 @@
-from itertools import groupby, product
 import itertools
+from itertools import groupby, product
 from typing import Iterable, Mapping, Tuple
-from shift.domain.day import Day, WeekDay
-from shift.domain.model import DomainModel
-from ortools.sat.python import cp_model
-from shift.domain.shift import Shift
-from shift.domain.worker import Worker
 
+from ortools.sat.python import cp_model
+
+from shift.domain.base import Model
+from shift.domain.day import Day, WeekDay
+from shift.domain.employee import Employee
+from shift.domain.shift import Period
 from shift.services.scheduler.utils import create_key
 
-DomainModels = Iterable[Iterable[DomainModel]]
+DomainModels = Iterable[Iterable[Model]]
 
 
 def workers_per_shift(
@@ -54,16 +55,16 @@ def shifts_on_weekday(
     model: cp_model.CpModel,
     vars: Mapping[str, cp_model.LinearExpr],
     n: int,
-    worker: Worker,
+    worker: Employee,
     weekday: WeekDay,
-    shifts: Iterable[Shift],
+    shifts: Iterable[Period],
     days: Iterable[Day],
 ):
     _sum = sum(
         vars[create_key(worker, day, shift)]
         for day in days
         for shift in shifts
-        if day.weekday == weekday
+        if day.week_day == weekday
     )
     model.Add(_sum <= n)
 
@@ -73,8 +74,8 @@ def shift_on_day(
     vars: Mapping[str, cp_model.LinearExpr],
     include: bool,
     day: Iterable[Day],
-    workers: Iterable[Worker],
-    shifts: Iterable[Shift],
+    workers: Iterable[Employee],
+    shifts: Iterable[Period],
 ):
     for worker in workers:
         _vars = (vars[create_key(worker, day, shift)] for shift in shifts)
@@ -88,9 +89,9 @@ def subsequent_shifts(
     model: cp_model.CpModel,
     vars: Mapping[str, cp_model.LinearExprT],
     days: Iterable[Day],
-    shifts: Iterable[Shift],
+    shifts: Iterable[Period],
     weekdays: Iterable[Tuple[WeekDay, WeekDay]],
-    workers: Iterable[Worker],
+    workers: Iterable[Employee],
 ):
     for subsequent_days in _consecutive_days(weekdays, days):
         for worker in workers:
@@ -108,8 +109,8 @@ def subsequent_days(
     n: int,
     days: Iterable[Day],
     weekdays: Iterable[Tuple[WeekDay, WeekDay]],
-    workers: Iterable[Worker],
-    shifts: Iterable[Shift],
+    workers: Iterable[Employee],
+    shifts: Iterable[Period],
 ):
     for _days in _consecutive_days(weekdays, days):
         for worker in workers:
@@ -126,15 +127,15 @@ def subsequent_weeks(
     n: int,
     days: Iterable[Day],
     weekdays: Iterable[Tuple[WeekDay, WeekDay]],
-    workers: Iterable[Worker],
-    shifts: Iterable[Shift],
+    workers: Iterable[Employee],
+    shifts: Iterable[Period],
 ):
-    days_in_week = groupby(days, lambda day: day.weeknumber)
+    days_in_week = groupby(days, lambda day: day.week_number)
     _, current_week = next(days_in_week)
     current_week = list(current_week)
     _, next_week = next(days_in_week)
     next_week = list(next_week)
-    for _ in range(max(day.weeknumber for day in days) - 2):
+    for _ in range(max(day.week_number for day in days) - 2):
         for worker in workers:
             for _weekdays in weekdays:
                 _sum = sum(
@@ -142,7 +143,7 @@ def subsequent_weeks(
                     for _day, _shift in product(
                         current_week + next_week, shifts
                     )
-                    if _day.weekday in _weekdays
+                    if _day.week_day in _weekdays
                 )
                 model.Add(_sum <= n)
         current_week = next_week
@@ -160,7 +161,7 @@ def _consecutive_days(
 
     n = n_weekdays.pop()
     for days_inclusive in _tee(sorted(days), n):
-        if list(day.weekday for day in days_inclusive) in weekdays:
+        if list(day.week_day for day in days_inclusive) in weekdays:
             yield days_inclusive
 
 

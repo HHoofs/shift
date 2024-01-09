@@ -1,17 +1,16 @@
-from collections import defaultdict
 from itertools import product
-from math import ceil, floor
 from typing import Iterable
+
 from ortools.sat.python import cp_model
-from shift.domain.day import Day
-from shift.domain.shift import Shift
-from shift.domain.worker import Worker
+
+from shift.domain.employee import Employee
+from shift.domain.shift import Period, Day
 from shift.services.scheduler.constraints import (
+    shifts_per_day,
     subsequent_days,
     subsequent_shifts,
     subsequent_weeks,
     workers_per_shift,
-    shifts_per_day,
 )
 from shift.services.scheduler.distribution import n_shifts, n_shifts_month
 from shift.services.scheduler.utils import create_key
@@ -20,8 +19,8 @@ from shift.services.scheduler.utils import create_key
 class ConstraintModel:
     def __init__(
         self,
-        workers: Iterable[Worker],
-        shifts: Iterable[Shift],
+        workers: Iterable[Employee],
+        shifts: Iterable[Period],
         days: Iterable[Day],
     ) -> None:
         self._workers = workers
@@ -143,7 +142,7 @@ class ConstraintModel:
                 self._vars,
                 worker,
                 self._shifts[-1:],
-                [_day for _day in self._days if not _day.weekday < 5],
+                [_day for _day in self._days if not _day.week_day < 5],
                 total_working_hours,
                 worker.contract_hours,
             )
@@ -155,7 +154,7 @@ class ConstraintModel:
                 [
                     _day
                     for _day in self._days
-                    if _day.is_weekend or _day.weekday == 5
+                    if _day.is_weekend or _day.week_day == 5
                 ],
                 total_working_hours,
                 total_working_hours / len(self._workers),
@@ -187,20 +186,21 @@ class ConstraintModel:
                     [
                         self._vars[create_key(worker, shift, day)]
                         for day, shift in product(self._days, self._shifts)
-                        if day.weekday == weekday
+                        if day.week_day == weekday
                     ],
                 )
                 _days.append(
                     sum(
                         self._vars[create_key(worker, shift, day)]
                         for day, shift in product(self._days, self._shifts)
-                        if day.weekday == weekday
+                        if day.week_day == weekday
                     )
                 )
 
             self.model.AddMaxEquality(var_m[worker], _days)
             self.model.Add(
-                sum(var_x[(worker.name, _weekday)] for _weekday in range(1, 5)) < 4
+                sum(var_x[(worker.name, _weekday)] for _weekday in range(1, 5))
+                < 4
             )
 
         self.model.Minimize(
@@ -210,7 +210,9 @@ class ConstraintModel:
 
     @staticmethod
     def _create_vars(
-        workers: Iterable[Worker], shifts: Iterable[Shift], rep: Iterable[Day]
+        workers: Iterable[Employee],
+        shifts: Iterable[Period],
+        rep: Iterable[Day],
     ):
         for var in product(workers, shifts, rep):
             yield create_key(*var)

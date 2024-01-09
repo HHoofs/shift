@@ -16,6 +16,8 @@ holidays = "^0.37"
 pytest = "^7.4.3"
 mypy = "^1.7.0"
 flake8 = "^6.1.0"
+isort = "^5.13.2"
+black = "^23.12.1"
 
 [build-system]
 requires = ["poetry-core"]
