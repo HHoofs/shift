@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import timedelta
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from enum import Flag
 from itertools import product
 from typing import Iterable, Set, Union
@@ -10,8 +10,8 @@ import holidays
 
 from shift.domain.base import Model
 
-
 WeekDay = int
+RegularShiftDuration = 8
 
 
 class Period(Flag):
@@ -31,7 +31,7 @@ class Period(Flag):
 
 @dataclass(frozen=True, eq=True)
 class Day:
-    date: datetime.date
+    date: date
 
     @property
     def week_day(self) -> WeekDay:
@@ -69,6 +69,7 @@ class Day:
 class Shift(Model):
     period: Period
     day: Day
+    duration: int = 8
 
     def __lt__(self, other: Shift) -> bool:
         if not isinstance(other, Shift):
@@ -111,22 +112,25 @@ class Slot(Shift):
 
 
 def shift_range(*_args: Shift, inclusive: bool = True) -> Iterable[Shift]:
-    start = _args[0]
-    end = _args[1]
-    if end < start:
+    if _args[1] < _args[0]:
         raise ValueError
 
-    day_range = range((end.day.date - start.day.date + timedelta(days=1)).days)
+    # get range of days between start and end
+    day_range = range(
+        (_args[1].day.date - _args[1].day.date + timedelta(days=1)).days
+    )
 
     for _day, _period in product(
-        (start.day.date + timedelta(delta) for delta in day_range),
+        (_args[0].day.date + timedelta(delta) for delta in day_range),
         sorted(period for period in Period),
     ):
         shift = Shift(_period, Day(_day))
-        if shift < start:
+        # Prevent shift on same day but earlier period
+        if shift < _args[0]:
             continue
-        elif inclusive and shift > end:
+        # Prevent shift on same day but later period
+        elif inclusive and shift > _args[1]:
             continue
-        elif not inclusive and not shift < end:
+        elif not inclusive and not shift < _args[1]:
             continue
         yield shift
