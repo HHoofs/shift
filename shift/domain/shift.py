@@ -59,6 +59,11 @@ class Day:
             return NotImplemented
         return self.date < other.date
 
+    def __le__(self, other) -> bool:
+        if not isinstance(other, Day):
+            return NotImplemented
+        return self.date <= other.date
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Day):
             return NotImplemented

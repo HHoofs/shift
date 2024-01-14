@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC
-from calendar import month_name
 from collections import defaultdict
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from datetime import date, timedelta
-from enum import Enum, Flag, auto
-from typing import Iterable, Optional, Sequence
-
-from dateutil.relativedelta import relativedelta
+from enum import Enum, IntEnum
+from functools import cached_property
+from typing import Iterable, Iterator, Optional, Union
 
 from shift.domain.base import Model
 from shift.domain.shift import Day, Period, Shift, WeekDay, shift_range
@@ -34,11 +32,12 @@ class Employee(Model):
         return self.id == other.id
 
 
-class SpecType(Enum):
-    UNAVAILABLE = auto()
-    NOT_PREFERRED = auto()
-    PREFERRED = auto()
-    MANDATORY = auto()
+class SpecType(IntEnum):
+    UNAVAILABLE_COR = -9
+    UNAVAILABLE = -2
+    NOT_PREFERRED = -1
+    PREFERRED = 1
+    MANDATORY = 2
 
 
 @dataclass
@@ -63,77 +62,91 @@ class Specifications(Model):
         else:
             raise
 
+    def __iter__(self) -> Iterator[Union[Specification, Holiday]]:
+        yield from self.shifts
+        yield from self.days
+        yield from self.period
+        yield from self.week_day
+        yield from self.holidays
+
+    def min_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return min(
+            spec_type
+            for specification in self
+            if (spec_type := specification.spec_for_shift(shift))
+        )
+
     def blocked_days(
-        self, start_month: date, end_month: date
+        self, start_day: Day, end_day: Day
     ) -> dict[date, list[date]]:
+        """d
+
+        Arguments:
+            start_day -- DAS
+            end_day -- Das
+
+        Returns:
+            _description_
+        """
         blocked_days = defaultdict(list)
-        _day = start_month
-        while _day <= end_month:
-            if (
-                any(
-                    _day == spec.shift.day
-                    for spec in self.shifts
-                    if spec.fte_correction
-                )
-                or any(
-                    _day == spec.day
-                    for spec in self.days
-                    if spec.fte_correction
-                )
-                or any(
-                    _day.isoweekday() == spec.week_day
-                    for spec in self.week_day
-                    if spec.fte_correction
-                )
-                or any(
-                    _day in [day.date for day in spec.days]
-                    for spec in self.holidays
-                    if spec.fte_correction
-                )
-            ):
-                blocked_days[_day.replace(day=1)].append(_day)
-            _day += timedelta(days=1)
+        day = start_day
+        while day <= end_day:
+            if all(self.min_for_shift(Shift(period, day)) is SpecType.UNAVAILABLE_COR for period in Period)
+                blocked_days[day.date.replace(day=1)].append(day)
+            day = Day(day.date + timedelta(days=1))
         return blocked_days
 
 
 @dataclass
-class Specification(Model):
+class Specification(Model, ABC):
     spec_type: SpecType
-    fte_correction: bool
 
-    def __post_init__(self):
-        if self.spec_type != SpecType.UNAVAILABLE and self.fte_correction:
-            raise
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return None
 
 
 @dataclass
 class SpecificShift(Specification):
     shift: Shift
 
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return self.spec_type if shift == self.shift else None
+
 
 @dataclass
 class SpecificDay(Specification):
     day: Day
+
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return self.spec_type if shift.day == self.day else None
 
 
 @dataclass
 class SpecificPeriod(Specification):
     period: Period
 
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return self.spec_type if shift.period == self.period else None
+
 
 @dataclass
 class SpecificWeekDay(Specification):
     week_day: WeekDay
+
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return self.spec_type if shift.day.week_day == self.week_day else None
 
 
 @dataclass
 class Holiday(Model):
     first_shift: Shift
     last_shift: Shift
-    spec_type = SpecType.UNAVAILABLE
-    fte_correction = True
+    spec_type = SpecType.UNAVAILABLE_COR
 
-    @property
+    def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
+        return self.spec_type if shift in self.shifts else None
+
+    @cached_property
     def shifts(self) -> Iterable[Shift]:
         return shift_range(self.first_shift, self.last_shift, inclusive=True)
 

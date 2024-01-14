@@ -4,9 +4,11 @@
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
-            "notebook.source.organizeImports": true
-          }
+            "notebook.source.organizeImports": "explicit"
+        }
     },
+    "autoDocstring.docstringFormat": "pep257",
+    "autoDocstring.generateDocstringOnEnter": true,
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#ff6433",
         "activityBar.background": "#ff6433",
