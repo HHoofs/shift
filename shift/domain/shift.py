@@ -15,8 +15,7 @@ RegularShiftDuration = 8
 
 
 class Period(Flag):
-    morning = 1
-    evening = 2
+    ...
 
     def __lt__(self, other: Period) -> bool:
         if not isinstance(other, Period):
@@ -27,6 +26,11 @@ class Period(Flag):
         if not isinstance(other, Period):
             return NotImplemented
         return self.value == other.value
+
+
+class DayAndEvening(Period):
+    morning = 1
+    evening = 2
 
 
 @dataclass(frozen=True, eq=True)
@@ -116,7 +120,9 @@ class Slot(Shift):
     n_employees: int = 1
 
 
-def shift_range(*_args: Shift, inclusive: bool = True) -> Iterable[Shift]:
+def shift_range(
+    *_args: Shift, periods: Iterable[Period], inclusive: bool = True
+) -> Iterable[Shift]:
     if _args[1] < _args[0]:
         raise ValueError
 
@@ -127,7 +133,7 @@ def shift_range(*_args: Shift, inclusive: bool = True) -> Iterable[Shift]:
 
     for _day, _period in product(
         (_args[0].day.date + timedelta(delta) for delta in day_range),
-        sorted(period for period in Period),
+        sorted(period for period in periods),
     ):
         shift = Shift(_period, Day(_day))
         # Prevent shift on same day but earlier period

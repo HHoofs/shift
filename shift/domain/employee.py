@@ -14,17 +14,13 @@ from shift.domain.shift import Day, Period, Shift, WeekDay, shift_range
 
 @dataclass(repr=True)
 class Employee(Model):
-    id: int
     name: str
     contract_hours: int
-    specifications: Specifications
+    specification_id: int
     events: list = []
 
     def __repr__(self) -> str:
         return self.name
-
-    def add_specification(self, specification: Specification) -> None:
-        self.specifications.add(specification)
 
     def __eq__(self, other: Employee) -> bool:
         if not isinstance(other, Employee):
@@ -42,6 +38,7 @@ class SpecType(IntEnum):
 
 @dataclass
 class Specifications(Model):
+    employee_id: int
     shifts: list[SpecificShift] = field(default_factory=list)
     days: list[SpecificDay] = field(default_factory=list)
     period: list[SpecificPeriod] = field(default_factory=list)
@@ -79,19 +76,14 @@ class Specifications(Model):
     def blocked_days(
         self, start_day: Day, end_day: Day
     ) -> dict[date, list[date]]:
-        """d
-
-        Arguments:
-            start_day -- DAS
-            end_day -- Das
-
-        Returns:
-            _description_
-        """
         blocked_days = defaultdict(list)
         day = start_day
         while day <= end_day:
-            if all(self.min_for_shift(Shift(period, day)) is SpecType.UNAVAILABLE_COR for period in Period)
+            if all(
+                self.min_for_shift(Shift(period, day))
+                is SpecType.UNAVAILABLE_COR
+                for period in Period
+            ):
                 blocked_days[day.date.replace(day=1)].append(day)
             day = Day(day.date + timedelta(days=1))
         return blocked_days
@@ -102,7 +94,7 @@ class Specification(Model, ABC):
     spec_type: SpecType
 
     def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
-        return None
+        raise NotImplementedError
 
 
 @dataclass
@@ -148,7 +140,15 @@ class Holiday(Model):
 
     @cached_property
     def shifts(self) -> Iterable[Shift]:
-        return shift_range(self.first_shift, self.last_shift, inclusive=True)
+        periods = self.first_shift.period.__class__
+        if not isinstance(self.last_shift, periods):
+            raise ValueError(
+                "The first and last shift should be specified using the same periods"
+            )
+
+        return shift_range(
+            self.first_shift, self.last_shift, periods=periods, inclusive=True
+        )
 
     @property
     def days(self) -> Iterable[Day]:
