@@ -1,13 +1,36 @@
-from datetime import date
-from shift.domain.shift import Day, Period, Shift, shift_range
+from dataclasses import dataclass
 
 
-if __name__ == "__main__":
-    shifts = shift_range(
-        Shift(Period.evening, Day(date(2002, 2, 2))),
-        Shift(Period.morning, Day(date(2002, 2, 3))),
-        inclusive=False,
-    )
+@dataclass
+class A:
+    a = [1, 2, 3, 4, 5]
+    b = ["a", "b", "c", "d", "e"]
 
-    for shift in shifts:
-        print(shift)
+    def __iter__(self):
+        yield from self.a
+        yield from self.b
+
+    def max(self):
+        for i in self:
+            print(i)
+
+
+a = A()
+
+a.max()
+
+
+from enum import IntEnum
+
+
+class Season(IntEnum):
+    SPRING = 1
+    SUMMER = 2
+    AUTUMN = 3
+    WINTER = 4
+
+
+s = Season.SPRING
+a = Season.AUTUMN
+
+min([s, a])
