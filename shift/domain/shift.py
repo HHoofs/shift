@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Flag
@@ -119,6 +120,10 @@ class Planned(Shift):
 class Slot(Shift):
     n_employees: int = 1
 
+    @property
+    def shift(self) -> Shift:
+        return Shift(self.period, self.day, self.duration)
+
 
 def shift_range(
     *_args: Shift, periods: Iterable[Period], inclusive: bool = True
@@ -145,3 +150,26 @@ def shift_range(
         elif not inclusive and not shift < _args[1]:
             continue
         yield shift
+
+
+def consecutive_shifts(
+    week_days: list[list[WeekDay]], shifts: Iterable[Shift]
+) -> Iterable[list[Shift]]:
+    week_days = [sorted(_weekdays) for _weekdays in week_days]
+
+    n_weekdays = {len(_weekdays) for _weekdays in week_days}
+    if len(n_weekdays) > 1:
+        raise ValueError("All sets of week days should have the same length")
+    n = n_weekdays.pop()
+
+    for shift in _tee(shifts, n):
+        if list(day.week_day for day in days_inclusive) in week_days:
+            yield days_inclusive
+
+
+def _tee(shifts: Iterable[Shift], n: int = 2) -> Iterable[tuple[Day, ...]]:
+    shifts_tee = itertools.tee(shifts, n)
+    for i in range(1, n):
+        for _ in range(i):
+            next(shifts_tee[i], None)
+    return zip(*shifts_tee)

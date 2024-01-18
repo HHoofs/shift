@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from itertools import groupby
 from typing import Iterable, Iterator
 
 from ortools.sat.python import cp_model
-from ortools.sat.python.cp_model import CpModel, LinearExprT
+from ortools.sat.python.cp_model import CpModel, IntVar, LinearExprT
 
 from shift.domain.base import Model
+from shift.domain.model import EmployeeSlot, get_key
 from shift.domain.shift import Day, Period, Shift, Slot, shift_range
 
 
@@ -44,7 +46,7 @@ class ModelConstraint(Model):
         self,
         slots: Iterable[Slot],
         model: cp_model.CpModel,
-        employee_slots: dict[str, cp_model.LinearExprT],
+        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
     ) -> None:
         raise NotImplementedError
 
@@ -55,30 +57,66 @@ class WorkersPerShift(ModelConstraint):
         self,
         slots: Iterable[Slot],
         model: CpModel,
-        employee_slots: dict[str, LinearExprT],
+        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
     ) -> None:
         for slot in slots:
             _sum = sum(
-                employee_slots[...] for employee_id in self.employee_ids
+                employee_slots[get_key(employee_id, slot.shift)]
+                for employee_id in self.employee_ids
             )
             model.Add(_sum == slot.n_employees)
 
 
-# def workers_per_shift(
-#     model: cp_model.CpModel,
-#     vars: Mapping[str, cp_model.LinearExprT],
-#     workers,
-#     n=1,
-#     *args: Iterable[DomainModels],
-# ):
-#     if n != 1:
-#         raise ValueError(
-#             f"Planning works only with 1 required worker for each shift. "
-#             f"It is therefore not possible to plan with the specified "
-#             f"{n} workers within each shift"
-#         )
+@dataclass
+class ShiftsPerDay(ModelConstraint):
+    n: int = 1
 
-#     for key in product(*args):
-#         model.AddExactlyOne(
-#             vars[create_key(worker, *key)] for worker in workers
-#         )
+    def add_constraint(
+        self,
+        slots: Iterable[Slot],
+        model: CpModel,
+        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
+    ) -> None:
+        if self.n != 1:
+            raise
+
+        for day, _slots in groupby(slots, key=lambda slot: slot.day):
+            for employee_id in self.employee_ids:
+                model.AddAtMostOne(
+                    employee_slots[get_key(employee_id, _slot.shift)]
+                    for _slot in _slots
+                )
+
+
+@dataclass
+class SpecificShifts(ModelConstraint):
+    blocked: bool = True
+
+    def add_constraint(
+        self,
+        slots: Iterable[Slot],
+        model: CpModel,
+        employee_slots: dict[EmployeeSlot, IntVar],
+    ) -> None:
+        for employee_id in self.employee_ids:
+            _employee_slots = (
+                employee_slots[get_key(employee_id, slot.shift)]
+                for slot in slots
+            )
+            if self.blocked:
+                model.Add(sum(_employee_slots) <= 0)
+            else:
+                for _employee_slot in _employee_slots:
+                    model.AddExactlyOne(_employee_slot)
+
+
+@dataclass
+class NoConsecutiveShifts(ModelConstraint):
+    def add_constraint(
+        self,
+        slots: Iterable[Slot],
+        model: CpModel,
+        employee_slots: dict[EmployeeSlot, IntVar],
+    ) -> None:
+        for employee_id in self.employee_ids:
+            
