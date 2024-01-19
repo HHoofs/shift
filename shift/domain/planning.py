@@ -157,8 +157,6 @@ class MaxRecurrentShifts(ModelConstraint):
         model: CpModel,
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
-        # return super().add_constraint(slots, model, employee_slots)
-
         slots_per_week = groupby(slots, lambda slot: slot.day.week_number)
         _, slots_0 = next(slots_per_week)
         _, slots_1 = next(slots_per_week)
