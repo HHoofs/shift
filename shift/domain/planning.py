@@ -5,8 +5,8 @@ from datetime import date
 from itertools import groupby
 from typing import Iterable
 
-from ortools.sat.python import cp_model
-from ortools.sat.python.cp_model import CpModel, IntVar
+from ortools.sat.python import cp_model  # type: ignore
+from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
 
 from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
