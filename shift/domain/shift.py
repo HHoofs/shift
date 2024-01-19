@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Flag
 from itertools import product
-from typing import Iterable, Set, Union
+from typing import Iterable, Set, TypeVar, Union
 
 import holidays
 
@@ -54,6 +54,10 @@ class Day:
     def week_number(self) -> int:
         return self.date.isocalendar()[1]
 
+    @property
+    def iso_year(self) -> int:
+        return self.date.isocalendar()[0]
+
     def __repr__(self) -> str:
         _day = self.date.strftime("%A %-d %B")
         _week = self.date.isocalendar()[1]
@@ -99,6 +103,9 @@ class Shift(Model):
 
     def __repr__(self) -> str:
         return f"{self.period.name} shift on {self.day}"
+
+
+_Shift = TypeVar("_Shift", bound=Shift)
 
 
 @dataclass(repr=True)
@@ -153,21 +160,14 @@ def shift_range(
 
 
 def consecutive_shifts(
-    week_days: list[list[WeekDay]], shifts: Iterable[Shift]
-) -> Iterable[list[Shift]]:
-    week_days = [sorted(_weekdays) for _weekdays in week_days]
-
-    n_weekdays = {len(_weekdays) for _weekdays in week_days}
-    if len(n_weekdays) > 1:
-        raise ValueError("All sets of week days should have the same length")
-    n = n_weekdays.pop()
-
-    for shift in _tee(shifts, n):
-        if list(day.week_day for day in days_inclusive) in week_days:
-            yield days_inclusive
+    week_days: list[WeekDay], shifts: Iterable[_Shift], n: int = 2
+) -> Iterable[tuple[_Shift, ...]]:
+    for _shifts in _tee(shifts, n):
+        if list(shift.day for shift in _shifts) in week_days:
+            yield _shifts
 
 
-def _tee(shifts: Iterable[Shift], n: int = 2) -> Iterable[tuple[Day, ...]]:
+def _tee(shifts: Iterable[_Shift], n: int = 2) -> Iterable[tuple[_Shift, ...]]:
     shifts_tee = itertools.tee(shifts, n)
     for i in range(1, n):
         for _ in range(i):
