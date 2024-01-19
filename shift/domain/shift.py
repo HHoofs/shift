@@ -23,7 +23,7 @@ class Period(Flag):
             return NotImplemented
         return self.value < other.value
 
-    def __eq__(self, other: Period) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Period):
             return NotImplemented
         return self.value == other.value
@@ -48,7 +48,7 @@ class Day:
 
     @property
     def is_holiday(self) -> bool:
-        return self.date in holidays.NL()
+        return self.date in holidays.country_holidays("NL")
 
     @property
     def week_number(self) -> int:
@@ -94,7 +94,7 @@ class Shift(Model):
             return self.period < other.period
         return False
 
-    def __eq__(self, other: Shift) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Shift):
             return NotImplemented
         if self.day == other.day and self.period == other.period:

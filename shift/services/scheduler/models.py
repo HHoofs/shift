@@ -4,7 +4,7 @@ from typing import Iterable
 from ortools.sat.python import cp_model
 
 from shift.domain.employee import Employee
-from shift.domain.shift import Period, Day
+from shift.domain.shift import Day, Period
 from shift.services.scheduler.constraints import (
     shifts_per_day,
     subsequent_days,

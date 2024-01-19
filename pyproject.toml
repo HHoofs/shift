@@ -15,6 +15,7 @@ holidays = "^0.37"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
 mypy = "^1.7.0"
+ortools-stubs = "^8.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

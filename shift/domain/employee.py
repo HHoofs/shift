@@ -22,7 +22,7 @@ class Employee(Model):
     def __repr__(self) -> str:
         return self.name
 
-    def __eq__(self, other: Employee) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Employee):
             return NotImplemented
         return self.id == other.id
@@ -75,7 +75,7 @@ class Specifications(Model):
 
     def blocked_days(
         self, start_day: Day, end_day: Day
-    ) -> dict[date, list[date]]:
+    ) -> dict[date, list[Day]]:
         blocked_days = defaultdict(list)
         day = start_day
         while day <= end_day:

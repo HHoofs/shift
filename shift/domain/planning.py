@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from itertools import groupby
-from typing import Iterable, Iterator, Literal
+from typing import Iterable
 
 from ortools.sat.python import cp_model
-from ortools.sat.python.cp_model import CpModel, IntVar, LinearExprT
+from ortools.sat.python.cp_model import CpModel, IntVar
 
 from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
@@ -158,9 +158,10 @@ class MaxRecurrentShifts(ModelConstraint):
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
         slots_per_week = groupby(slots, lambda slot: slot.day.week_number)
-        _, slots_0 = next(slots_per_week)
-        _, slots_1 = next(slots_per_week)
-        slots_0, slots_1 = list(slots_0), list(slots_1)
+        _, _slots_0 = next(slots_per_week)
+        _, _slots_1 = next(slots_per_week)
+        slots_0 = list(_slots_0)
+        slots_1 = list(_slots_1)
 
         n_weeks = set(
             (slot.day.week_number, slot.day.iso_year) for slot in slots
@@ -178,5 +179,5 @@ class MaxRecurrentShifts(ModelConstraint):
                 model.Add(_sum <= self.max)
 
             slots_0 = slots_1
-            _, slots_1 = next(slots_per_week)
-            slots_1 = list(slots_1)
+            _, _slots_1 = next(slots_per_week)
+            slots_1 = list(_slots_1)

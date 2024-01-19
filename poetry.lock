@@ -275,6 +275,16 @@ pandas = ">=2.0.0"
 protobuf = ">=4.25.0"
 
 [[package]]
+name = "ortools-stubs"
+version = "8.0.0"
+description = "PEP 561 type stubs for Google OR-Tools"
+optional = false
+python-versions = "*"
+files = [
+    {file = "ortools-stubs-8.0.0.tar.gz", hash = "sha256:42a8e1b9a2ee39152439aab19a2d9a6ee693e2d936dd665cdbe194883c4d6de1"},
+]
+
+[[package]]
 name = "packaging"
 version = "23.2"
 description = "Core utilities for Python packages"
@@ -595,4 +605,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "467967bb89a731003ec1713d242907a5db517882b5535ce0e98d73940d4c9011"
+content-hash = "dc6cf931ec1434767452fbce555103cd1eeb054a0be024a87ffd647306bcce18"
