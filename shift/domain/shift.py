@@ -12,6 +12,7 @@ import holidays
 from shift.domain.base import Model
 
 WeekDay = int
+Month = int
 RegularShiftDuration = 8
 
 
@@ -41,6 +42,10 @@ class Day:
     @property
     def week_day(self) -> WeekDay:
         return self.date.isoweekday()
+
+    @property
+    def month(self) -> Month:
+        return self.date.month
 
     @property
     def is_weekend(self) -> bool:
