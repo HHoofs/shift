@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -25,7 +25,7 @@ class Specifications(Model):
     employee_id: int
     shifts: list[SpecificShift] = field(default_factory=list)
     days: list[SpecificDay] = field(default_factory=list)
-    period: list[SpecificPeriod] = field(default_factory=list)
+    periods: list[SpecificPeriod] = field(default_factory=list)
     week_day: list[SpecificWeekDay] = field(default_factory=list)
     holidays: list[Holiday] = field(default_factory=list)
 
@@ -35,7 +35,7 @@ class Specifications(Model):
         elif isinstance(specification, SpecificDay):
             self.days.append(specification)
         elif isinstance(specification, SpecificPeriod):
-            self.period.append(specification)
+            self.periods.append(specification)
         elif isinstance(specification, SpecificWeekDay):
             self.week_day.append(specification)
         elif isinstance(specification, Holiday):
@@ -46,7 +46,7 @@ class Specifications(Model):
     def __iter__(self) -> Iterator[Union[Specification, Holiday]]:
         yield from self.shifts
         yield from self.days
-        yield from self.period
+        yield from self.periods
         yield from self.week_day
         yield from self.holidays
 
@@ -77,6 +77,7 @@ class Specifications(Model):
 class Specification(Model, ABC):
     spec_type: SpecType
 
+    @abstractmethod
     def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
         raise NotImplementedError
 
