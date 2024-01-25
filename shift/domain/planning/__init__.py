@@ -3,7 +3,8 @@ from datetime import date
 from typing import Iterable, Optional
 
 from shift.domain.base import Model
-from shift.domain.planning.constraint import ModelConstraint
+from shift.domain.planning.constraints import PlanningConstraint
+from shift.domain.planning.optimizers import PlanningOptimization
 from shift.domain.shift import Day, Period, Shift, Slot, shift_range
 
 
@@ -15,8 +16,8 @@ class Planning(Model):
     shift_duration: int
     employees_per_shift: int
     employee_ids: list[int] = field(default_factory=list)
-    constraints: list[ModelConstraint] = field(default_factory=list)
-    optimization: Optional[Optimization] = None
+    constraints: list[PlanningConstraint] = field(default_factory=list)
+    optimization: Optional[PlanningOptimization] = None
 
     def get_slots(self) -> Iterable[Slot]:
         first_shift = Shift(min(self.periods), Day(self.first_day))

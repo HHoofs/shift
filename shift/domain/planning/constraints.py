@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
 from typing import Iterable
@@ -10,16 +11,19 @@ from shift.domain.model import EmployeeSlot, get_key
 from shift.domain.shift import (
     DayAndEvening,
     Period,
+    Shift,
     Slot,
     WeekDay,
+    WeekDays,
     consecutive_shifts,
 )
 
 
 @dataclass
-class ModelConstraint(Model):
+class PlanningConstraint(Model):
     employee_ids: list[int] = field(default_factory=list)
 
+    @abstractmethod
     def add_constraint(
         self,
         slots: Iterable[Slot],
@@ -30,7 +34,7 @@ class ModelConstraint(Model):
 
 
 @dataclass
-class WorkersPerShift(ModelConstraint):
+class WorkersPerShift(PlanningConstraint):
     def add_constraint(
         self,
         slots: Iterable[Slot],
@@ -46,7 +50,7 @@ class WorkersPerShift(ModelConstraint):
 
 
 @dataclass
-class ShiftsPerDay(ModelConstraint):
+class ShiftsPerDay(PlanningConstraint):
     n: int = 1
 
     def add_constraint(
@@ -67,8 +71,9 @@ class ShiftsPerDay(ModelConstraint):
 
 
 @dataclass
-class SpecificShifts(ModelConstraint):
+class SpecificShifts(PlanningConstraint):
     blocked: bool = True
+    shifts: list[Shift] = field(default_factory=list)
 
     def add_constraint(
         self,
@@ -80,6 +85,7 @@ class SpecificShifts(ModelConstraint):
             _employee_slots = (
                 employee_slots[get_key(employee_id, slot.shift)]
                 for slot in slots
+                if slot.shift in self.shifts
             )
             if self.blocked:
                 model.Add(sum(_employee_slots) <= 0)
@@ -89,8 +95,8 @@ class SpecificShifts(ModelConstraint):
 
 
 @dataclass
-class MaxConsecutiveShifts(ModelConstraint):
-    week_days: list[WeekDay] = [1, 2, 3, 4, 5, 6, 7]
+class MaxConsecutiveShifts(PlanningConstraint):
+    week_days: list[WeekDay] = WeekDays
     periods: list[Period] = [period for period in DayAndEvening]
     max: int = 1
     window: int = 2
@@ -115,7 +121,7 @@ class MaxConsecutiveShifts(ModelConstraint):
 
 
 @dataclass
-class MaxRecurrentShifts(ModelConstraint):
+class MaxRecurrentShifts(PlanningConstraint):
     week_days: list[WeekDay] = [6, 7]
     periods: list[Period] = [period for period in DayAndEvening]
     max: int = 1

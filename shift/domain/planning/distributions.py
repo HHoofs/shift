@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
 from math import ceil, floor
@@ -11,9 +12,10 @@ from shift.domain.shift import Slot
 
 
 @dataclass
-class ModelDistribution(Model):
+class PlanningDistribution(Model):
     employee_hours: dict[int, int] = field(default_factory=dict)
 
+    @abstractmethod
     def add_distribution(
         self,
         slots: Sequence[Slot],
@@ -28,7 +30,7 @@ class ModelDistribution(Model):
 
 
 @dataclass
-class NShifts(ModelDistribution):
+class NShifts(PlanningDistribution):
     offset: int = 0
 
     def add_distribution(
@@ -48,7 +50,7 @@ class NShifts(ModelDistribution):
 
 
 @dataclass
-class NShiftsMonth(ModelDistribution):
+class NShiftsMonth(PlanningDistribution):
     offset: int = 0
 
     def add_distribution(

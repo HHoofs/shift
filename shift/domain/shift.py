@@ -5,14 +5,16 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Flag
 from itertools import product
-from typing import Iterable, Set, TypeVar, Union
+from typing import Iterable, Literal, Set, TypeVar, Union, cast
 
 import holidays
 
 from shift.domain.base import Model
 
-WeekDay = int
-Month = int
+WeekDay = Literal[1, 2, 3, 4, 5, 6, 7]
+WeekDays: list[WeekDay] = [1, 2, 3, 4, 5, 6, 7]
+Month = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+Months: list[Month] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 RegularShiftDuration = 8
 
 
@@ -41,11 +43,11 @@ class Day:
 
     @property
     def week_day(self) -> WeekDay:
-        return self.date.isoweekday()
+        return cast(WeekDay, self.date.isoweekday())
 
     @property
     def month(self) -> Month:
-        return self.date.month
+        return cast(Month, self.date.isoweekday())
 
     @property
     def is_weekend(self) -> bool:
