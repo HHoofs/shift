@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
@@ -12,8 +14,23 @@ from shift.domain.shift import Slot
 
 
 @dataclass
-class PlanningDistribution(Model):
+class Distributions(Model):
     employee_hours: dict[int, int] = field(default_factory=dict)
+    n_shifts: list[NShifts] = field(default_factory=list)
+    n_shifts_monthly: list[NShiftsMonthly] = field(default_factory=list)
+
+    def add(self, distribution: PlanningDistribution) -> None:
+        distribution.employee_hours = self.employee_hours
+
+        if isinstance(distribution, NShifts):
+            self.n_shifts.append(distribution)
+        elif isinstance(distribution, NShiftsMonthly):
+            self.n_shifts_monthly.append(distribution)
+
+
+@dataclass
+class PlanningDistribution(Model):
+    employee_hours: dict[int, int] = field(init=False)
 
     @abstractmethod
     def add_distribution(
@@ -50,7 +67,7 @@ class NShifts(PlanningDistribution):
 
 
 @dataclass
-class NShiftsMonth(PlanningDistribution):
+class NShiftsMonthly(PlanningDistribution):
     offset: int = 0
 
     def add_distribution(

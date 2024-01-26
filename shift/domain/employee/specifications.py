@@ -29,7 +29,7 @@ class Specifications(Model):
     week_day: list[SpecificWeekDay] = field(default_factory=list)
     holidays: list[Holiday] = field(default_factory=list)
 
-    def add(self, specification) -> None:
+    def add(self, specification: Specification | Holiday) -> None:
         if isinstance(specification, SpecificShift):
             self.shifts.append(specification)
         elif isinstance(specification, SpecificDay):

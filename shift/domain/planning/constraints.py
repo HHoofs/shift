@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+import logging
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import Iterable
+from typing import Iterable, Iterator, Optional
 
 from ortools.sat.python import cp_model  # type: ignore
 from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
@@ -20,8 +23,55 @@ from shift.domain.shift import (
 
 
 @dataclass
-class PlanningConstraint(Model):
+class Constraints(Model):
     employee_ids: list[int] = field(default_factory=list)
+    workers_per_shift: Optional[WorkersPerShift] = None
+    shifts_per_day: Optional[ShiftsPerDay] = None
+    specific_shifts: list[SpecificShifts] = field(default_factory=list)
+    max_consecutive_shifts: list[MaxConsecutiveShifts] = field(
+        default_factory=list
+    )
+    max_recurrent_shifts: list[MaxRecurrentShifts] = field(
+        default_factory=list
+    )
+
+    def add(
+        self, constraint: PlanningConstraint, employee_ids: Optional[list[int]]
+    ) -> None:
+        if employee_ids:
+            constraint.employee_ids = employee_ids
+        else:
+            constraint.employee_ids = self.employee_ids
+
+        if isinstance(constraint, WorkersPerShift):
+            if self.workers_per_shift is not None:
+                logging.warning(
+                    "Replacing existing workers per shift constraint"
+                )
+            self.workers_per_shift = constraint
+        elif isinstance(constraint, ShiftsPerDay):
+            if self.shifts_per_day is not None:
+                logging.warning("Replacing existing shifts per day constraint")
+            self.shifts_per_day = constraint
+        elif isinstance(constraint, SpecificShifts):
+            self.specific_shifts.append(constraint)
+        elif isinstance(constraint, MaxConsecutiveShifts):
+            self.max_consecutive_shifts.append(constraint)
+        elif isinstance(constraint, MaxRecurrentShifts):
+            self.max_recurrent_shifts.append(constraint)
+
+    def __iter__(self) -> Iterator[PlanningConstraint]:
+        if self.workers_per_shift:
+            yield self.workers_per_shift
+        if self.shifts_per_day:
+            yield self.shifts_per_day
+        yield from self.specific_shifts
+        yield from self.max_recurrent_shifts
+
+
+@dataclass
+class PlanningConstraint(Model):
+    employee_ids: list[int] = field(init=False)
 
     @abstractmethod
     def add_constraint(
