@@ -1,14 +1,25 @@
 import itertools
 from itertools import groupby, product
-from typing import Iterable, Mapping, Tuple
+from typing import (
+    Iterable,
+    Mapping,
+    Tuple,
+)
 
 from ortools.sat.python import cp_model
 
 from shift.domain.base import Model
-from shift.domain.day import Day, WeekDay
-from shift.domain.employee import Employee
+from shift.domain.day import (
+    Day,
+    WeekDay,
+)
+from shift.domain.employee import (
+    Employee,
+)
 from shift.domain.shift import Period
-from shift.services.scheduler.utils import create_key
+from shift.services.scheduler.utils import (
+    create_key,
+)
 
 DomainModels = Iterable[Iterable[Model]]
 
@@ -96,9 +107,22 @@ def subsequent_shifts(
     for subsequent_days in _consecutive_days(weekdays, days):
         for worker in workers:
             model.AddAtMostOne(
-                vars[create_key(worker, _day, _shift)]
-                for (_day, _shift) in zip(
-                    subsequent_days, (max(shifts), min(shifts))
+                vars[
+                    create_key(
+                        worker,
+                        _day,
+                        _shift,
+                    )
+                ]
+                for (
+                    _day,
+                    _shift,
+                ) in zip(
+                    subsequent_days,
+                    (
+                        max(shifts),
+                        min(shifts),
+                    ),
                 )
             )
 
@@ -115,8 +139,17 @@ def subsequent_days(
     for _days in _consecutive_days(weekdays, days):
         for worker in workers:
             _sum = sum(
-                vars[create_key(worker, _day, _shift)]
-                for (_day, _shift) in product(_days, shifts)
+                vars[
+                    create_key(
+                        worker,
+                        _day,
+                        _shift,
+                    )
+                ]
+                for (
+                    _day,
+                    _shift,
+                ) in product(_days, shifts)
             )
             model.Add(_sum <= n)
 
@@ -130,7 +163,10 @@ def subsequent_weeks(
     workers: Iterable[Employee],
     shifts: Iterable[Period],
 ):
-    days_in_week = groupby(days, lambda day: day.week_number)
+    days_in_week = groupby(
+        days,
+        lambda day: day.week_number,
+    )
     _, current_week = next(days_in_week)
     current_week = list(current_week)
     _, next_week = next(days_in_week)
@@ -139,9 +175,16 @@ def subsequent_weeks(
         for worker in workers:
             for _weekdays in weekdays:
                 _sum = sum(
-                    vars[create_key(worker, _day, _shift)]
+                    vars[
+                        create_key(
+                            worker,
+                            _day,
+                            _shift,
+                        )
+                    ]
                     for _day, _shift in product(
-                        current_week + next_week, shifts
+                        current_week + next_week,
+                        shifts,
                     )
                     if _day.week_day in _weekdays
                 )
@@ -152,7 +195,8 @@ def subsequent_weeks(
 
 
 def _consecutive_days(
-    weekdays: Iterable[Tuple[WeekDay, ...]], days: Iterable[Day]
+    weekdays: Iterable[Tuple[WeekDay, ...]],
+    days: Iterable[Day],
 ) -> Iterable[Tuple[Day, ...]]:
     n_weekdays = {len(_weekdays) for _weekdays in weekdays}
     if len(n_weekdays) > 1:

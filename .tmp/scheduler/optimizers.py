@@ -1,4 +1,6 @@
-from ortools.sat.python.cp_model import CpSolver
+from ortools.sat.python.cp_model import (
+    CpSolver,
+)
 
 
 def create_solver() -> CpSolver:

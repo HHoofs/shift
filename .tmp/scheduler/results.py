@@ -5,9 +5,14 @@ from typing import Iterable
 from ortools.sat.python import cp_model
 
 from shift.domain.day import Day
-from shift.domain.employee import Employee
+from shift.domain.employee import (
+    Employee,
+)
 from shift.domain.shift import Period
-from shift.services.scheduler.models import ConstraintModel, create_key
+from shift.services.scheduler.models import (
+    ConstraintModel,
+    create_key,
+)
 
 
 class SolutionCallback(cp_model.CpSolverSolutionCallback):
@@ -31,7 +36,12 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
 
     @classmethod
     def from_model(cls, model: ConstraintModel):
-        return cls(model._vars, model._workers, model._shifts, model._days)
+        return cls(
+            model._vars,
+            model._workers,
+            model._shifts,
+            model._days,
+        )
 
     def on_solution_callback(self):
         self._solution_count += 1
@@ -65,7 +75,13 @@ class SolutionCallback(cp_model.CpSolverSolutionCallback):
                     worker_planned = ""
                     for shift in self._shifts:
                         if self.Value(
-                            self._vars[create_key(day, worker, shift)]
+                            self._vars[
+                                create_key(
+                                    day,
+                                    worker,
+                                    shift,
+                                )
+                            ]
                         ):
                             print(f"  {worker} works {shift} shift")
                             worker_planned = shift

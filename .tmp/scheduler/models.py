@@ -3,8 +3,13 @@ from typing import Iterable
 
 from ortools.sat.python import cp_model
 
-from shift.domain.employee import Employee
-from shift.domain.shift import Day, Period
+from shift.domain.employee import (
+    Employee,
+)
+from shift.domain.shift import (
+    Day,
+    Period,
+)
 from shift.services.scheduler.constraints import (
     shifts_per_day,
     subsequent_days,
@@ -12,8 +17,13 @@ from shift.services.scheduler.constraints import (
     subsequent_weeks,
     workers_per_shift,
 )
-from shift.services.scheduler.distribution import n_shifts, n_shifts_month
-from shift.services.scheduler.utils import create_key
+from shift.services.scheduler.distribution import (
+    n_shifts,
+    n_shifts_month,
+)
+from shift.services.scheduler.utils import (
+    create_key,
+)
 
 
 class ConstraintModel:
@@ -30,19 +40,35 @@ class ConstraintModel:
         self._vars = {}
 
     @property
-    def model(self) -> cp_model.CpModel:
+    def model(
+        self,
+    ) -> cp_model.CpModel:
         return self._model
 
     def add_vars_to_model(self):
-        for var in self._create_vars(self._workers, self._shifts, self._days):
+        for var in self._create_vars(
+            self._workers,
+            self._shifts,
+            self._days,
+        ):
             self._vars[var] = self.model.NewBoolVar("var" + str(var))
 
     def add_constraints_to_model(self):
         workers_per_shift(
-            self.model, self._vars, self._workers, 1, self._shifts, self._days
+            self.model,
+            self._vars,
+            self._workers,
+            1,
+            self._shifts,
+            self._days,
         )
         shifts_per_day(
-            self.model, self._vars, self._shifts, 1, self._days, self._workers
+            self.model,
+            self._vars,
+            self._shifts,
+            1,
+            self._days,
+            self._workers,
         )
         subsequent_shifts(
             self.model,
@@ -51,7 +77,10 @@ class ConstraintModel:
             [self._shifts[-1]],
             [
                 (day, next_day)
-                for day, next_day in zip(range(1, 8), list(range(2, 8)) + [1])
+                for day, next_day in zip(
+                    range(1, 8),
+                    list(range(2, 8)) + [1],
+                )
             ],
             workers=self._workers,
         )
@@ -62,7 +91,10 @@ class ConstraintModel:
             self._shifts,
             [
                 (day, next_day)
-                for day, next_day in zip(range(1, 8), list(range(2, 8)) + [1])
+                for day, next_day in zip(
+                    range(1, 8),
+                    list(range(2, 8)) + [1],
+                )
             ],
             workers=self._workers,
         )
@@ -109,7 +141,13 @@ class ConstraintModel:
             self._vars,
             1,
             self._days,
-            [(1,), (2,), (3,), (4,), (5,)],
+            [
+                (1,),
+                (2,),
+                (3,),
+                (4,),
+                (5,),
+            ],
             self._workers,
             self._shifts[-1:],
         )
@@ -175,31 +213,62 @@ class ConstraintModel:
 
         for worker in self._workers:
             var_m[worker] = self.model.NewIntVar(
-                -50, 50, "var_m" + str(worker)
+                -50,
+                50,
+                "var_m" + str(worker),
             )
             _days = []
             for weekday in range(1, 5):
-                _key = worker.name, weekday
+                _key = (
+                    worker.name,
+                    weekday,
+                )
                 var_x[_key] = self.model.NewBoolVar("var_x" + str(_key))
                 self.model.AddMaxEquality(
                     var_x[_key],
                     [
-                        self._vars[create_key(worker, shift, day)]
-                        for day, shift in product(self._days, self._shifts)
+                        self._vars[
+                            create_key(
+                                worker,
+                                shift,
+                                day,
+                            )
+                        ]
+                        for day, shift in product(
+                            self._days,
+                            self._shifts,
+                        )
                         if day.week_day == weekday
                     ],
                 )
                 _days.append(
                     sum(
-                        self._vars[create_key(worker, shift, day)]
-                        for day, shift in product(self._days, self._shifts)
+                        self._vars[
+                            create_key(
+                                worker,
+                                shift,
+                                day,
+                            )
+                        ]
+                        for day, shift in product(
+                            self._days,
+                            self._shifts,
+                        )
                         if day.week_day == weekday
                     )
                 )
 
             self.model.AddMaxEquality(var_m[worker], _days)
             self.model.Add(
-                sum(var_x[(worker.name, _weekday)] for _weekday in range(1, 5))
+                sum(
+                    var_x[
+                        (
+                            worker.name,
+                            _weekday,
+                        )
+                    ]
+                    for _weekday in range(1, 5)
+                )
                 < 4
             )
 

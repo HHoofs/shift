@@ -1,11 +1,22 @@
 from datetime import date, timedelta
 
 from shift.domain.day import Day
-from shift.domain.employee import Employee
-from shift.domain.shift import Block, Period
-from shift.services.scheduler.models import ConstraintModel
-from shift.services.scheduler.optimizers import create_solver
-from shift.services.scheduler.results import SolutionCallback
+from shift.domain.employee import (
+    Employee,
+)
+from shift.domain.shift import (
+    Block,
+    Period,
+)
+from shift.services.scheduler.models import (
+    ConstraintModel,
+)
+from shift.services.scheduler.optimizers import (
+    create_solver,
+)
+from shift.services.scheduler.results import (
+    SolutionCallback,
+)
 
 if __name__ == "__main__":
     workers = [
@@ -22,10 +33,17 @@ if __name__ == "__main__":
         Employee(11, "K", 28),
         Employee(12, "L", 28),
     ]
-    shifts = [Period(1, Block(1)), Period(2, Block(2))]
+    shifts = [
+        Period(1, Block(1)),
+        Period(2, Block(2)),
+    ]
     start_day = date(2024, 1, 1)
     days = [
-        Day(_day, start_day + timedelta(days=_day)) for _day in range(365 // 2)
+        Day(
+            _day,
+            start_day + timedelta(days=_day),
+        )
+        for _day in range(365 // 2)
     ]
     cm = ConstraintModel(workers, shifts, days)
     cm.add_vars_to_model()

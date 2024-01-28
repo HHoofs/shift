@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Iterable, Optional
+from typing import Iterable
 
 from shift.domain.base import Model
 from shift.domain.planning.constraints import PlanningConstraint

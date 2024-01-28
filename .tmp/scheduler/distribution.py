@@ -5,7 +5,9 @@ from typing import Iterable, Mapping
 from ortools.sat.python import cp_model
 
 from shift.domain.day import Day
-from shift.services.scheduler.utils import create_key
+from shift.services.scheduler.utils import (
+    create_key,
+)
 
 
 def n_shifts(
@@ -22,10 +24,19 @@ def n_shifts(
     worker_shifts = contract_hours / total_hours * total_shifts
 
     if worker_shifts.is_integer():
-        min_shifts, max_shifts = int(worker_shifts), int(worker_shifts)
+        min_shifts, max_shifts = (
+            int(worker_shifts),
+            int(worker_shifts),
+        )
     else:
-        min_shifts, max_shifts = floor(worker_shifts), ceil(worker_shifts)
-    min_shifts, max_shifts = min_shifts - wiggle, max_shifts + wiggle
+        min_shifts, max_shifts = (
+            floor(worker_shifts),
+            ceil(worker_shifts),
+        )
+    min_shifts, max_shifts = (
+        min_shifts - wiggle,
+        max_shifts + wiggle,
+    )
     worker_shifts = [
         vars[create_key(worker, _shift, _day)]
         for _shift, _day in product(shifts, days)
@@ -48,18 +59,32 @@ def n_shifts_month(
     worker_monthly_shifts = worker_shifts / len(months)
 
     if worker_monthly_shifts.is_integer():
-        min_shifts, max_shifts = int(worker_monthly_shifts), int(
-            worker_monthly_shifts
+        min_shifts, max_shifts = (
+            int(worker_monthly_shifts),
+            int(worker_monthly_shifts),
         )
     else:
-        min_shifts, max_shifts = floor(worker_monthly_shifts), ceil(
-            worker_monthly_shifts
+        min_shifts, max_shifts = (
+            floor(worker_monthly_shifts),
+            ceil(worker_monthly_shifts),
         )
-    min_shifts, max_shifts = min_shifts - 1, max_shifts + 1
+    min_shifts, max_shifts = (
+        min_shifts - 1,
+        max_shifts + 1,
+    )
 
-    for _, _days in groupby(days, lambda day: day.date.month):
+    for _, _days in groupby(
+        days,
+        lambda day: day.date.month,
+    ):
         month_shifts = [
-            vars[create_key(worker, _shift, _day)]
+            vars[
+                create_key(
+                    worker,
+                    _shift,
+                    _day,
+                )
+            ]
             for _shift, _day in product(shifts, _days)
         ]
         model.Add(min_shifts <= sum(month_shifts))
