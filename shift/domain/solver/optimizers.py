@@ -5,13 +5,13 @@ from ortools.sat.python import cp_model  # type: ignore
 
 from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
-from shift.domain.shift import Slot, WeekDay, WeekDays
+from shift.domain.shifts import Slot, WeekDay, WeekDays
 
 
 @dataclass
 class PlanningOptimization(Model):
     employee_ids: list[int] = field(default_factory=list)
-    week_days: list[WeekDay] = WeekDays
+    week_days: list[WeekDay] = field(default_factory=lambda: WeekDays)
 
     def add_optimization(
         self,

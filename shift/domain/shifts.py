@@ -31,6 +31,9 @@ class Period(Flag):
             return NotImplemented
         return self.value == other.value
 
+    def __hash__(self) -> int:
+        return super().__hash__()
+
 
 class DayAndEvening(Period):
     morning = 1
@@ -85,6 +88,9 @@ class Day:
             return NotImplemented
         return self.date == other.date
 
+    def __hash__(self) -> int:
+        return hash(self.date)
+
 
 @dataclass
 class Shift(Model):
@@ -110,6 +116,9 @@ class Shift(Model):
 
     def __repr__(self) -> str:
         return f"{self.period.name} shift on {self.day}"
+
+    def __hash__(self) -> int:
+        return hash((self.period, self.day, self.duration))
 
 
 _Shift = TypeVar("_Shift", bound=Shift)
@@ -147,7 +156,7 @@ def shift_range(
 
     # get range of days between start and end
     day_range = range(
-        (_args[1].day.date - _args[1].day.date + timedelta(days=1)).days
+        (_args[1].day.date - _args[0].day.date + timedelta(days=1)).days
     )
 
     for _day, _period in product(

@@ -8,7 +8,7 @@ from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
 from shift.domain.planning.constraints import PlanningConstraint
 from shift.domain.planning.distributions import PlanningDistribution
-from shift.domain.shift import Shift, Slot
+from shift.domain.shifts import Shift, Slot
 from shift.domain.solver.optimizers import PlanningOptimization
 
 
@@ -29,9 +29,15 @@ class Solver(Model):
         for employee_id, shift in product(employee_ids, shifts):
             self.employee_slots[
                 get_key(employee_id, shift)
-            ] = self.model.NewBoolVar(
-                f"Slot <Employee: {employee_id}; Shift: {shift}"
-            )
+            ] = self._get_employee_slot(self.model, employee_id, shift)
+
+    @staticmethod
+    def _get_employee_slot(
+        model: cp_model.CpModel, employee_id: int, shift: Shift
+    ) -> cp_model.IntVar:
+        return model.NewBoolVar(
+            f"Slot <Employee: {employee_id}; Shift: {shift}"
+        )
 
     def add_constraints(
         self, constraints: Iterable[PlanningConstraint], slots: Sequence[Slot]

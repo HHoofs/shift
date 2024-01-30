@@ -1,4 +1,4 @@
-from shift.domain.shift import Shift
+from shift.domain.shifts import Shift
 
 EmployeeSlot = tuple[int, Shift]  # Employee-id, Shift
 

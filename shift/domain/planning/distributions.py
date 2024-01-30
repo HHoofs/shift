@@ -10,7 +10,7 @@ from ortools.sat.python import cp_model  # type: ignore
 
 from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
-from shift.domain.shift import Slot
+from shift.domain.shifts import Slot
 
 
 @dataclass

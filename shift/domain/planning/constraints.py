@@ -11,7 +11,7 @@ from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
 
 from shift.domain.base import Model
 from shift.domain.model import EmployeeSlot, get_key
-from shift.domain.shift import (
+from shift.domain.shifts import (
     DayAndEvening,
     Period,
     Shift,
@@ -36,7 +36,9 @@ class Constraints(Model):
     )
 
     def add(
-        self, constraint: PlanningConstraint, employee_ids: Optional[list[int]]
+        self,
+        constraint: PlanningConstraint,
+        employee_ids: Optional[list[int]],
     ) -> None:
         if employee_ids:
             constraint.employee_ids = employee_ids
@@ -78,7 +80,10 @@ class PlanningConstraint(Model):
         self,
         slots: Iterable[Slot],
         model: cp_model.CpModel,
-        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
+        employee_slots: dict[
+            EmployeeSlot,
+            cp_model.IntVar,
+        ],
     ) -> None:
         raise NotImplementedError
 
@@ -89,7 +94,10 @@ class WorkersPerShift(PlanningConstraint):
         self,
         slots: Iterable[Slot],
         model: CpModel,
-        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
+        employee_slots: dict[
+            EmployeeSlot,
+            cp_model.IntVar,
+        ],
     ) -> None:
         for slot in slots:
             _sum = sum(
@@ -107,12 +115,18 @@ class ShiftsPerDay(PlanningConstraint):
         self,
         slots: Iterable[Slot],
         model: CpModel,
-        employee_slots: dict[EmployeeSlot, cp_model.IntVar],
+        employee_slots: dict[
+            EmployeeSlot,
+            cp_model.IntVar,
+        ],
     ) -> None:
         if self.n != 1:
             raise
 
-        for day, _slots in groupby(slots, key=lambda slot: slot.day):
+        for day, _slots in groupby(
+            slots,
+            key=lambda slot: slot.day,
+        ):
             for employee_id in self.employee_ids:
                 model.AddAtMostOne(
                     employee_slots[get_key(employee_id, _slot.shift)]
@@ -146,8 +160,10 @@ class SpecificShifts(PlanningConstraint):
 
 @dataclass
 class MaxConsecutiveShifts(PlanningConstraint):
-    week_days: list[WeekDay] = WeekDays
-    periods: list[Period] = [period for period in DayAndEvening]
+    week_days: list[WeekDay] = field(default_factory=lambda: WeekDays)
+    periods: list[Period] = field(
+        default_factory=lambda: [period for period in DayAndEvening]
+    )
     max: int = 1
     window: int = 2
 
@@ -159,7 +175,10 @@ class MaxConsecutiveShifts(PlanningConstraint):
     ) -> None:
         for _slots in consecutive_shifts(
             self.week_days,
-            filter(lambda slot: slot.period in self.periods, slots),
+            filter(
+                lambda slot: slot.period in self.periods,
+                slots,
+            ),
             self.window,
         ):
             for employee_id in self.employee_ids:
@@ -172,9 +191,15 @@ class MaxConsecutiveShifts(PlanningConstraint):
 
 @dataclass
 class MaxRecurrentShifts(PlanningConstraint):
-    week_days: list[WeekDay] = [6, 7]
-    periods: list[Period] = [period for period in DayAndEvening]
+    week_days: list[WeekDay] = field(default_factory=lambda: [6, 7])
+    periods: list[Period] = field(
+        default_factory=lambda: [period for period in DayAndEvening]
+    )
     max: int = 1
+
+    @property
+    def window(self) -> int:
+        return 2
 
     def add_constraint(
         self,
@@ -182,17 +207,27 @@ class MaxRecurrentShifts(PlanningConstraint):
         model: CpModel,
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
-        slots_per_week = groupby(slots, lambda slot: slot.day.week_number)
-        _, _slots_0 = next(slots_per_week)
-        _, _slots_1 = next(slots_per_week)
-        slots_0 = list(_slots_0)
-        slots_1 = list(_slots_1)
-
-        n_weeks = set(
-            (slot.day.week_number, slot.day.iso_year) for slot in slots
+        sorted_slots = sorted(slots)
+        # groupby week_number (without years
+        # because groupby is not actually group.by)
+        slots_per_week = groupby(
+            sorted_slots, lambda slot: slot.day.week_number
         )
 
-        for _ in range(len(n_weeks) - 2):
+        # retrieve slots from first week
+        _, _slots_0 = next(slots_per_week)
+        slots_0 = list(_slots_0)
+
+        n_weeks = set(
+            (slot.day.week_number, slot.day.iso_year) for slot in sorted_slots
+        )
+
+        for _ in range(len(n_weeks) - 1):
+            # roll over slots
+            slots_1 = slots_0
+            _, _slots_0 = next(slots_per_week)
+            slots_0 = list(_slots_0)
+
             for employee_id in self.employee_ids:
                 _sum = sum(
                     employee_slots[get_key(employee_id, slot.shift)]
@@ -202,7 +237,3 @@ class MaxRecurrentShifts(PlanningConstraint):
                     )
                 )
                 model.Add(_sum <= self.max)
-
-            slots_0 = slots_1
-            _, _slots_1 = next(slots_per_week)
-            slots_1 = list(_slots_1)

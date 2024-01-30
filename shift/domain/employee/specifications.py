@@ -9,7 +9,7 @@ from functools import cached_property
 from typing import Iterable, Iterator, Optional, Union
 
 from shift.domain.base import Model
-from shift.domain.shift import Day, Period, Shift, WeekDay, shift_range
+from shift.domain.shifts import Day, Period, Shift, WeekDay, shift_range
 
 
 class SpecType(IntEnum):

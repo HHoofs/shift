@@ -5,7 +5,7 @@ from typing import Iterable
 from shift.domain.base import Model
 from shift.domain.planning.constraints import PlanningConstraint
 from shift.domain.planning.distributions import Distributions
-from shift.domain.shift import Day, Period, Shift, Slot, shift_range
+from shift.domain.shifts import Day, Period, Shift, Slot, shift_range
 
 
 @dataclass
