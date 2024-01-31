@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from shift.domain.base import Model
+from shift.domain.utils.model import Model
 
 
 @dataclass(repr=True)

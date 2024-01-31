@@ -1,10 +1,10 @@
 from ortools.sat.python import cp_model
 from pytest import fixture  # type: ignore
 
-from shift.domain.model import EmployeeSlot
 from shift.domain.planning.constraints import MaxRecurrentShifts
-from shift.domain.shifts import Slot
-from shift.domain.solver import Solver
+from shift.domain.shifts.shift import Slot
+from shift.domain.solver.solver import Solver
+from shift.domain.utils.utils import EmployeeSlot
 
 
 @fixture

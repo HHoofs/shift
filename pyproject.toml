@@ -28,3 +28,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 # Allow lines to be as long as 120.
 line-length = 79
+
+
+[tool.pytest.ini_options]
+minversion = "7.4.3"
+testpaths = "tests"
+pythonpath = "."

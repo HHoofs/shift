@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Iterable
 
-from shift.domain.base import Model
 from shift.domain.planning.constraints import PlanningConstraint
 from shift.domain.planning.distributions import Distributions
-from shift.domain.shifts import Day, Period, Shift, Slot, shift_range
+from shift.domain.shifts.shift import Day, Period, Shift, Slot, shift_range
+from shift.domain.utils.model import Model
 
 
 @dataclass

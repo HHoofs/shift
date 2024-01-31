@@ -9,17 +9,16 @@ from typing import Iterable, Iterator, Optional
 from ortools.sat.python import cp_model  # type: ignore
 from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
 
-from shift.domain.base import Model
-from shift.domain.model import EmployeeSlot, get_key
-from shift.domain.shifts import (
-    DayAndEvening,
+from shift.domain.shifts.days import WeekDay, WeekDays
+from shift.domain.shifts.periods import DayAndEvening  # type: ignore
+from shift.domain.shifts.shift import (
     Period,
     Shift,
     Slot,
-    WeekDay,
-    WeekDays,
     consecutive_shifts,
 )
+from shift.domain.utils.model import Model
+from shift.domain.utils.utils import EmployeeSlot, get_key
 
 
 @dataclass

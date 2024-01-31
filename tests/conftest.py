@@ -3,17 +3,18 @@ from datetime import date
 from ortools.sat.python import cp_model  # type: ignore
 from pytest import fixture
 
-from shift.domain.shifts import Day, DayAndEvening, Slot, shift_range
+from shift.domain.shifts.periods import DayAndEvening
+from shift.domain.shifts.shift import Day, Slot, shift_range
 
 
 @fixture
 def slot_t0() -> Slot:
-    return Slot(period=DayAndEvening.morning, day=Day(date=date(2002, 2, 4)))
+    return Slot(period=DayAndEvening.day, day=Day(date=date(2002, 2, 4)))
 
 
 @fixture
 def slot_t1() -> Slot:
-    return Slot(period=DayAndEvening.morning, day=Day(date=date(2002, 6, 3)))
+    return Slot(period=DayAndEvening.day, day=Day(date=date(2002, 6, 3)))
 
 
 @fixture

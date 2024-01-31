@@ -2,98 +2,28 @@ from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass, field
-from datetime import date, timedelta
-from enum import Flag
+from datetime import timedelta
 from itertools import product
-from typing import Iterable, Literal, Set, TypeVar, Union, cast
+from typing import Iterable, Iterator, Set, TypeVar, Union
 
-import holidays
+from shift.domain.shifts.days import Day, WeekDay
+from shift.domain.shifts.periods import Period
+from shift.domain.utils.model import Model
 
-from shift.domain.base import Model
-
-WeekDay = Literal[1, 2, 3, 4, 5, 6, 7]
-WeekDays: list[WeekDay] = [1, 2, 3, 4, 5, 6, 7]
-Month = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-Months: list[Month] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 RegularShiftDuration = 8
-
-
-class Period(Flag):
-    ...
-
-    def __lt__(self, other: Period) -> bool:
-        if not isinstance(other, Period):
-            return NotImplemented
-        return self.value < other.value
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Period):
-            return NotImplemented
-        return self.value == other.value
-
-    def __hash__(self) -> int:
-        return super().__hash__()
-
-
-class DayAndEvening(Period):
-    morning = 1
-    evening = 2
-
-
-@dataclass(frozen=True, eq=True)
-class Day:
-    date: date
-
-    @property
-    def week_day(self) -> WeekDay:
-        return cast(WeekDay, self.date.isoweekday())
-
-    @property
-    def month(self) -> Month:
-        return cast(Month, self.date.isoweekday())
-
-    @property
-    def is_weekend(self) -> bool:
-        return self.week_day > 5
-
-    @property
-    def is_holiday(self) -> bool:
-        return self.date in holidays.country_holidays("NL")
-
-    @property
-    def week_number(self) -> int:
-        return self.date.isocalendar()[1]
-
-    @property
-    def iso_year(self) -> int:
-        return self.date.isocalendar()[0]
-
-    def __repr__(self) -> str:
-        _day = self.date.strftime("%A %-d %B")
-        _week = self.date.isocalendar()[1]
-        return f"{_day} (week: {_week})"
-
-    def __lt__(self, other) -> bool:
-        if not isinstance(other, Day):
-            return NotImplemented
-        return self.date < other.date
-
-    def __le__(self, other) -> bool:
-        if not isinstance(other, Day):
-            return NotImplemented
-        return self.date <= other.date
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Day):
-            return NotImplemented
-        return self.date == other.date
-
-    def __hash__(self) -> int:
-        return hash(self.date)
 
 
 @dataclass
 class Shift(Model):
+    """_summary_
+
+    Arguments:
+        Model -- _description_
+
+    Returns:
+        _description_
+    """
+
     period: Period
     day: Day
     duration: int = 8
@@ -124,7 +54,7 @@ class Shift(Model):
 _Shift = TypeVar("_Shift", bound=Shift)
 
 
-@dataclass(repr=True)
+@dataclass()
 class Planned(Shift):
     employee_ids: Set[int] = field(default_factory=set)
 
@@ -138,6 +68,12 @@ class Planned(Shift):
             return True
         return False
 
+    def __repr__(self) -> str:
+        _repr = "planned " + super().__repr__()
+        if self.employee_ids:
+            _repr += f", for ids: {self.employee_ids}"
+        return _repr
+
 
 @dataclass(eq=True)
 class Slot(Shift):
@@ -147,10 +83,13 @@ class Slot(Shift):
     def shift(self) -> Shift:
         return Shift(self.period, self.day, self.duration)
 
+    def __repr__(self) -> str:
+        return f"slot {super().__repr__()}, for {self.n_employees} employee(s)"
+
 
 def shift_range(
     *_args: Shift, periods: Iterable[Period], inclusive: bool = True
-) -> Iterable[Shift]:
+) -> Iterator[Shift]:
     if _args[1] < _args[0]:
         raise ValueError
 

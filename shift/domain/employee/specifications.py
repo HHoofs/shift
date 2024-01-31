@@ -8,8 +8,10 @@ from enum import IntEnum
 from functools import cached_property
 from typing import Iterable, Iterator, Optional, Union
 
-from shift.domain.base import Model
-from shift.domain.shifts import Day, Period, Shift, WeekDay, shift_range
+from shift.domain.shifts.days import WeekDay
+from shift.domain.shifts.periods import Period
+from shift.domain.shifts.shift import Day, Shift, shift_range
+from shift.domain.utils.model import Model
 
 
 class SpecType(IntEnum):

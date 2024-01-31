@@ -4,12 +4,12 @@ from typing import Iterable, Optional, Sequence
 
 from ortools.sat.python import cp_model  # type: ignore
 
-from shift.domain.base import Model
-from shift.domain.model import EmployeeSlot, get_key
 from shift.domain.planning.constraints import PlanningConstraint
 from shift.domain.planning.distributions import PlanningDistribution
-from shift.domain.shifts import Shift, Slot
+from shift.domain.shifts.shift import Shift, Slot
 from shift.domain.solver.optimizers import PlanningOptimization
+from shift.domain.utils.model import Model
+from shift.domain.utils.utils import EmployeeSlot, get_key
 
 
 @dataclass

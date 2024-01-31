@@ -3,9 +3,10 @@ from typing import Sequence
 
 from ortools.sat.python import cp_model  # type: ignore
 
-from shift.domain.base import Model
-from shift.domain.model import EmployeeSlot, get_key
-from shift.domain.shifts import Slot, WeekDay, WeekDays
+from shift.domain.shifts.days import WeekDay, WeekDays
+from shift.domain.shifts.shift import Slot
+from shift.domain.utils.model import Model
+from shift.domain.utils.utils import EmployeeSlot, get_key
 
 
 @dataclass
