@@ -29,3 +29,5 @@ def test_max_recurrent_shifts(
     max_recurrent_shifts = MaxRecurrentShifts()
     max_recurrent_shifts.employee_ids = employee_ids
     max_recurrent_shifts.add_constraint(slots, model, employee_slots)
+
+    model

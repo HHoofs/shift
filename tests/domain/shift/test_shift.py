@@ -4,7 +4,13 @@ import pytest
 
 from shift.domain.shifts.days import Day
 from shift.domain.shifts.periods import DayAndEvening
-from shift.domain.shifts.shift import Planned, Shift, Slot, shift_range
+from shift.domain.shifts.shift import (
+    Planned,
+    Shift,
+    Slot,
+    get_consecutive_shifts,
+    shift_range,
+)
 
 
 @pytest.mark.parametrize(
@@ -33,7 +39,9 @@ from shift.domain.shifts.shift import Planned, Shift, Slot, shift_range
     ],
 )
 @pytest.mark.parametrize("inclusive", [True, False])
-def test_shift_range_length(start, end, length, inclusive):
+def test_shift_range_length(
+    start: Shift, end: Shift, length: int, inclusive: bool
+):
     length = length if inclusive else length - 1
     assert (
         len(
@@ -47,34 +55,50 @@ def test_shift_range_length(start, end, length, inclusive):
     )
 
 
-def test_shift_range_start_before_end():
-    start = Shift(DayAndEvening.day, Day(date(2002, 2, 2)))
-    end_before_start = Shift(DayAndEvening.day, Day(date(2002, 1, 1)))
+def test_shift_range_start_before_end(slot_t0: Slot, slot_t1: Slot):
     with pytest.raises(ValueError):
-        next(shift_range(start, end_before_start, periods=DayAndEvening))
+        next(shift_range(slot_t1, slot_t0, periods=DayAndEvening))
 
 
 @pytest.mark.parametrize(
-    "start,end,length",
+    "start,end",
     [
         (
             Slot(DayAndEvening.day, Day(date(2002, 2, 2))),
             Slot(DayAndEvening.day, Day(date(2002, 3, 3))),
-            59,
         ),
         (
             Planned(DayAndEvening.day, Day(date(2002, 2, 2))),
             Planned(DayAndEvening.day, Day(date(2002, 3, 3))),
-            59,
         ),
         (
             Slot(DayAndEvening.day, Day(date(2002, 2, 2))),
             Planned(DayAndEvening.day, Day(date(2002, 3, 3))),
-            59,
         ),
     ],
 )
-def test_shift_range_with_variants(start, end, length):
+def test_shift_range_with_variants(start: Shift, end: Shift):
     _shift_range = list(shift_range(start, end, periods=DayAndEvening))
-    assert len(_shift_range) == length
-    assert all(isinstance(_shift, Slot) for _shift in _shift_range)
+
+    assert len(_shift_range) == 59
+    assert all(isinstance(_shift, Shift) for _shift in _shift_range)
+
+
+def test_consecutive_shifts(slots: list[Slot]):
+    consecutive_slots = list(get_consecutive_shifts(slots))
+    # The last slot has no consecutive shift
+    assert len(consecutive_slots) == len(slots) - 1
+
+    three_consecutive_slots = list(get_consecutive_shifts(slots, n=3))
+    assert len(three_consecutive_slots) == len(slots) - 2
+
+    weekend_consecutive_slots = list(
+        get_consecutive_shifts(slots, week_days=(6, 7), n=2)
+    )
+
+    for consecutive_slots in weekend_consecutive_slots:
+        assert all(slot.day.week_day in (6, 7) for slot in consecutive_slots)
+        assert not (
+            consecutive_slots[0].day.week_day == 7
+            and consecutive_slots[0].period == DayAndEvening.evening
+        )

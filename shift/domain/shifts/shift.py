@@ -4,9 +4,9 @@ import itertools
 from dataclasses import dataclass, field
 from datetime import timedelta
 from itertools import product
-from typing import Iterable, Iterator, Set, TypeVar, Union
+from typing import Iterable, Iterator, Sequence, Set, TypeVar, Union
 
-from shift.domain.shifts.days import Day, WeekDay
+from shift.domain.shifts.days import Day, WeekDay, WeekDays
 from shift.domain.shifts.periods import Period
 from shift.domain.utils.model import Model
 
@@ -51,7 +51,7 @@ class Shift(Model):
         return hash((self.period, self.day, self.duration))
 
 
-_Shift = TypeVar("_Shift", bound=Shift)
+S = TypeVar("S", bound=Shift)
 
 
 @dataclass()
@@ -114,15 +114,17 @@ def shift_range(
         yield shift
 
 
-def consecutive_shifts(
-    week_days: list[WeekDay], shifts: Iterable[_Shift], n: int = 2
-) -> Iterable[tuple[_Shift, ...]]:
+def get_consecutive_shifts(
+    shifts: Iterable[S],
+    week_days: Sequence[WeekDay] = WeekDays,
+    n: int = 2,
+) -> Iterable[tuple[S, ...]]:
     for _shifts in _tee(shifts, n):
-        if list(shift.day for shift in _shifts) in week_days:
+        if all(shift.day.week_day in week_days for shift in _shifts):
             yield _shifts
 
 
-def _tee(shifts: Iterable[_Shift], n: int = 2) -> Iterable[tuple[_Shift, ...]]:
+def _tee(shifts: Iterable[S], n: int = 2) -> Iterable[tuple[S, ...]]:
     shifts_tee = itertools.tee(shifts, n)
     for i in range(1, n):
         for _ in range(i):
