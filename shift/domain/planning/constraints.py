@@ -15,7 +15,7 @@ from shift.domain.shifts.shift import (
     Period,
     Shift,
     Slot,
-    consecutive_shifts,
+    get_consecutive_shifts,
 )
 from shift.domain.utils.model import Model
 from shift.domain.utils.utils import EmployeeSlot, get_key
@@ -37,7 +37,7 @@ class Constraints(Model):
     def add(
         self,
         constraint: PlanningConstraint,
-        employee_ids: Optional[list[int]],
+        employee_ids: Optional[list[int]] = None,
     ) -> None:
         if employee_ids:
             constraint.employee_ids = employee_ids
@@ -172,12 +172,12 @@ class MaxConsecutiveShifts(PlanningConstraint):
         model: CpModel,
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
-        for _slots in consecutive_shifts(
-            self.week_days,
+        for _slots in get_consecutive_shifts(
             filter(
                 lambda slot: slot.period in self.periods,
                 slots,
             ),
+            self.week_days,
             self.window,
         ):
             for employee_id in self.employee_ids:

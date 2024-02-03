@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Literal, cast
+from typing import Literal, Sequence, cast
 
 import holidays
 
 WeekDay = Literal[1, 2, 3, 4, 5, 6, 7]
-WeekDays: list[WeekDay] = [1, 2, 3, 4, 5, 6, 7]
+WeekDays: Sequence[WeekDay] = (1, 2, 3, 4, 5, 6, 7)
 Month = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-Months: list[Month] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+Months: Sequence[Month] = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 
 
 @dataclass(frozen=True, eq=True)

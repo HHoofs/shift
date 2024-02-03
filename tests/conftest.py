@@ -13,14 +13,33 @@ def slot_t0() -> Slot:
 
 
 @fixture
-def slot_t1() -> Slot:
-    return Slot(period=DayAndEvening.day, day=Day(date=date(2002, 6, 3)))
+def slot_t1_delta_4months() -> Slot:
+    return Slot(period=DayAndEvening.evening, day=Day(date=date(2002, 6, 3)))
 
 
 @fixture
-def slots(slot_t0: Slot, slot_t1: Slot) -> list[Slot]:
+def slot_t1_delta_1week() -> Slot:
+    return Slot(period=DayAndEvening.evening, day=Day(date=date(2002, 2, 11)))
+
+
+@fixture
+def slots_4months(slot_t0: Slot, slot_t1_delta_4months: Slot) -> list[Slot]:
     _slots = []
-    for shift in shift_range(slot_t0, slot_t1, periods=DayAndEvening):
+    for shift in shift_range(
+        slot_t0, slot_t1_delta_4months, periods=DayAndEvening
+    ):
+        _slots.append(
+            Slot(shift.period, shift.day, shift.duration, n_employees=1)
+        )
+    return _slots
+
+
+@fixture
+def slots_1week(slot_t0: Slot, slot_t1_delta_1week: Slot) -> list[Slot]:
+    _slots = []
+    for shift in shift_range(
+        slot_t0, slot_t1_delta_1week, periods=DayAndEvening
+    ):
         _slots.append(
             Slot(shift.period, shift.day, shift.duration, n_employees=1)
         )
