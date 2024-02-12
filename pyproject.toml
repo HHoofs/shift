@@ -14,12 +14,17 @@ holidays = "^0.37"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
+coverage = "^7.4.1"
+
+
+[tool.poetry.group.type.dependencies]
 mypy = "^1.7.0"
 ortools-stubs = "^8.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.13"
+
 
 [build-system]
 requires = ["poetry-core"]

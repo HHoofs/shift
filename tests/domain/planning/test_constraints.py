@@ -23,21 +23,23 @@ def employee_slots(
 
 
 @pytest.mark.parametrize("max", [1, 2, 3])
+@pytest.mark.parametrize("n_employees", [1, 2, 3])
 def test_max_recurrent_shifts(
     slots_1week: list[Slot],
     model: cp_model.CpModel,
     employee_slots: dict[EmployeeSlot, cp_model.IntVar],
     max: int,
+    n_employees: int,
 ):
     max_recurrent_shifts = MaxRecurrentShifts(max=max)
-    max_recurrent_shifts.employee_ids = [1, 2, 3]
+    max_recurrent_shifts.employee_ids = list(range(n_employees))
     max_recurrent_shifts.add_constraint(slots_1week, model, employee_slots)
 
     constrained_model = MessageToDict(model.Proto())
     constraints = constrained_model["constraints"]
     variables = constrained_model["variables"]
 
-    assert len(constraints) == 3
+    assert len(constraints) == n_employees
     for constraint in constraints:
         assert all(
             any(

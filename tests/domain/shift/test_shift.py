@@ -88,16 +88,16 @@ def test_shift_range_with_variants(start: Shift, end: Shift):
     assert all(isinstance(_shift, Shift) for _shift in _shift_range)
 
 
-def test_consecutive_shifts(slots: list[Slot]):
-    consecutive_slots = list(get_consecutive_shifts(slots))
+def test_consecutive_shifts(slots_4months: list[Slot]):
+    consecutive_slots = list(get_consecutive_shifts(slots_4months))
     # The last slot has no consecutive shift
-    assert len(consecutive_slots) == len(slots) - 1
+    assert len(consecutive_slots) == len(slots_4months) - 1
 
-    three_consecutive_slots = list(get_consecutive_shifts(slots, n=3))
-    assert len(three_consecutive_slots) == len(slots) - 2
+    three_consecutive_slots = list(get_consecutive_shifts(slots_4months, n=3))
+    assert len(three_consecutive_slots) == len(slots_4months) - 2
 
     weekend_consecutive_slots = list(
-        get_consecutive_shifts(slots, week_days=(6, 7), n=2)
+        get_consecutive_shifts(slots_4months, week_days=(6, 7), n=2)
     )
 
     for consecutive_slots in weekend_consecutive_slots:
