@@ -4,7 +4,7 @@ import logging
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import Iterable, Iterator, Optional
+from typing import Iterable, Iterator, Optional, Sequence
 
 from ortools.sat.python import cp_model  # type: ignore
 from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
@@ -159,7 +159,7 @@ class SpecificShifts(PlanningConstraint):
 
 @dataclass
 class MaxConsecutiveShifts(PlanningConstraint):
-    week_days: list[WeekDay] = field(default_factory=lambda: WeekDays)
+    week_days: Sequence[WeekDay] = field(default_factory=lambda: WeekDays)
     periods: list[Period] = field(
         default_factory=lambda: [period for period in DayAndEvening]
     )

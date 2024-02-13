@@ -12,7 +12,7 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 @dataclass
 class PlanningOptimization(Model):
     employee_ids: list[int] = field(default_factory=list)
-    week_days: list[WeekDay] = field(default_factory=lambda: WeekDays)
+    week_days: Sequence[WeekDay] = field(default_factory=lambda: WeekDays)
 
     def add_optimization(
         self,

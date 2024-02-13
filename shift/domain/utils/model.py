@@ -13,8 +13,4 @@ class Model:
     def __repr__(self) -> str:
         cls_fields: Tuple[Field, ...] = fields(self.__class__)
 
-        for _field in cls_fields:
-            # This check is to avoid fields annotated with other types
-            # such as `str`
-            if _field:
-                print(_field)
+        return ",".join([str(_field) for _field in cls_fields if _field])
