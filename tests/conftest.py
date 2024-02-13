@@ -5,6 +5,8 @@ from pytest import fixture
 
 from shift.domain.shifts.periods import DayAndEvening
 from shift.domain.shifts.shift import Day, Slot, shift_range
+from shift.domain.solver.solver import Solver
+from shift.domain.utils.utils import EmployeeSlot
 
 
 @fixture
@@ -49,6 +51,19 @@ def slots_1week(slot_t0: Slot, slot_t1_delta_1week: Slot) -> list[Slot]:
 @fixture
 def employee_ids() -> list[int]:
     return list(range(10))
+
+
+@fixture
+def employee_slots_1week(
+    slots_1week: list[Slot], employee_ids: list[int], model: cp_model.CpModel
+) -> dict[EmployeeSlot, cp_model.IntVar]:
+    employee_slots = {}
+    for id in employee_ids:
+        for slot in slots_1week:
+            employee_slots[(id, slot.shift)] = Solver._get_employee_slot(
+                model, id, slot.shift
+            )
+    return employee_slots
 
 
 @fixture

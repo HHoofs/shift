@@ -33,7 +33,7 @@ class PlanningOptimization(Model):
             for week_day in self.week_days:
                 key = (employee_id, week_day)
 
-                any_planned_on_week_day = model.NewBoolVar(
+                any_planned_on_week_day[key] = model.NewBoolVar(
                     f"any planned <employee: {key[0]}; week day: {key[1]}>"
                 )
 
