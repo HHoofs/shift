@@ -5,6 +5,11 @@ from shift.domain.shifts.shift import Slot
 from shift.domain.solver.optimizers import PlanningOptimization
 
 
+def test_entity():
+    optimizer = PlanningOptimization([1])
+    assert optimizer.entity == "PlanningOptimization"
+
+
 @pytest.mark.parametrize("week_days", [(1,), (7, 3, 5), (1, 2, 3, 4, 5, 6, 7)])
 def test_add_optimization(
     slots_1week: list[Slot],
@@ -23,10 +28,7 @@ def test_add_optimization(
 
     constrained_model = MessageToDict(model.Proto())
     constraints = constrained_model["constraints"]
-    # variables = constrained_model["variables"]
 
-    expected_n_constraints = len(week_days) * len(employee_ids) + len(
-        employee_ids
-    )
+    n_expected_constraints = (len(week_days) + 1) * len(employee_ids)
 
-    assert len(constraints) == expected_n_constraints
+    assert len(constraints) == n_expected_constraints

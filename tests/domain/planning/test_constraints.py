@@ -2,9 +2,69 @@ import pytest  # type: ignore
 from google.protobuf.json_format import MessageToDict
 from ortools.sat.python import cp_model
 
-from shift.domain.planning.constraints import MaxRecurrentShifts
+from shift.domain.planning.constraints import (
+    Constraints,
+    MaxConsecutiveShifts,
+    MaxRecurrentShifts,
+    PlanningConstraint,
+    ShiftsPerDay,
+    SpecificShifts,
+    WorkersPerShift,
+)
 from shift.domain.shifts.shift import Slot
 from shift.domain.utils.utils import EmployeeSlot
+
+
+def test_constraint_model(employee_ids: list[int]):
+    constraints = Constraints(employee_ids)
+    assert constraints.employee_ids == employee_ids
+    assert constraints.entity == "Constraints"
+    with pytest.raises(AttributeError):
+        assert str(constraints)
+
+
+@pytest.fixture
+def workers_per_shift():
+    return WorkersPerShift()
+
+
+@pytest.fixture
+def shifts_per_day():
+    return ShiftsPerDay()
+
+
+@pytest.fixture
+def specific_shifts():
+    return SpecificShifts()
+
+
+@pytest.fixture
+def max_consecutive_shifts():
+    return MaxConsecutiveShifts()
+
+
+@pytest.fixture
+def max_recurrent_shifts():
+    return MaxRecurrentShifts()
+
+
+def test_constraint_add(
+    employee_ids: list[int],
+    workers_per_shift: PlanningConstraint,
+    shifts_per_day: PlanningConstraint,
+    specific_shifts: PlanningConstraint,
+    max_consecutive_shifts: PlanningConstraint,
+    max_recurrent_shifts: PlanningConstraint,
+):
+    constraints = Constraints(employee_ids)
+
+    constraints.add(workers_per_shift)
+    constraints.add(shifts_per_day)
+    constraints.add(specific_shifts)
+    constraints.add(max_consecutive_shifts)
+    constraints.add(max_recurrent_shifts)
+
+    assert len(list(constraints)) == 5
 
 
 @pytest.mark.parametrize("max", [1, 2, 3])

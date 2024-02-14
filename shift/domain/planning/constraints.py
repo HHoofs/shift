@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import Iterable, Iterator, Optional, Sequence
+from typing import (
+    Iterable,
+    Iterator,
+    Optional,
+    Protocol,
+    Sequence,
+)
 
 from ortools.sat.python import cp_model  # type: ignore
 from ortools.sat.python.cp_model import CpModel, IntVar  # type: ignore
@@ -24,14 +29,16 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 @dataclass
 class Constraints(Model):
     employee_ids: list[int] = field(default_factory=list)
-    workers_per_shift: Optional[WorkersPerShift] = None
-    shifts_per_day: Optional[ShiftsPerDay] = None
-    specific_shifts: list[SpecificShifts] = field(default_factory=list)
+    workers_per_shift: Optional[WorkersPerShift] = field(init=False)
+    shifts_per_day: Optional[ShiftsPerDay] = field(init=False)
+    specific_shifts: list[SpecificShifts] = field(
+        init=False, default_factory=list
+    )
     max_consecutive_shifts: list[MaxConsecutiveShifts] = field(
-        default_factory=list
+        init=False, default_factory=list
     )
     max_recurrent_shifts: list[MaxRecurrentShifts] = field(
-        default_factory=list
+        init=False, default_factory=list
     )
 
     def add(
@@ -45,13 +52,13 @@ class Constraints(Model):
             constraint.employee_ids = self.employee_ids
 
         if isinstance(constraint, WorkersPerShift):
-            if self.workers_per_shift is not None:
+            if not getattr(self, "workers_per_shift", None):
                 logging.warning(
                     "Replacing existing workers per shift constraint"
                 )
             self.workers_per_shift = constraint
         elif isinstance(constraint, ShiftsPerDay):
-            if self.shifts_per_day is not None:
+            if not getattr(self, "shifts_per_day", None):
                 logging.warning("Replacing existing shifts per day constraint")
             self.shifts_per_day = constraint
         elif isinstance(constraint, SpecificShifts):
@@ -67,14 +74,13 @@ class Constraints(Model):
         if self.shifts_per_day:
             yield self.shifts_per_day
         yield from self.specific_shifts
+        yield from self.max_consecutive_shifts
         yield from self.max_recurrent_shifts
 
 
-@dataclass
-class PlanningConstraint(Model):
+class PlanningConstraint(Protocol):
     employee_ids: list[int] = field(init=False)
 
-    @abstractmethod
     def add_constraint(
         self,
         slots: Iterable[Slot],
@@ -84,11 +90,13 @@ class PlanningConstraint(Model):
             cp_model.IntVar,
         ],
     ) -> None:
-        raise NotImplementedError
+        ...
 
 
 @dataclass
-class WorkersPerShift(PlanningConstraint):
+class WorkersPerShift(Model):
+    employee_ids: list[int] = field(init=False)
+
     def add_constraint(
         self,
         slots: Iterable[Slot],
@@ -100,14 +108,17 @@ class WorkersPerShift(PlanningConstraint):
     ) -> None:
         for slot in slots:
             _sum = sum(
-                employee_slots[get_key(employee_id, slot.shift)]
-                for employee_id in self.employee_ids
+                (
+                    employee_slots[get_key(employee_id, slot.shift)]
+                    for employee_id in self.employee_ids
+                )
             )
             model.Add(_sum == slot.n_employees)
 
 
 @dataclass
-class ShiftsPerDay(PlanningConstraint):
+class ShiftsPerDay(Model):
+    employee_ids: list[int] = field(init=False)
     n: int = 1
 
     def add_constraint(
@@ -135,6 +146,7 @@ class ShiftsPerDay(PlanningConstraint):
 
 @dataclass
 class SpecificShifts(PlanningConstraint):
+    employee_ids: list[int] = field(init=False)
     blocked: bool = True
     shifts: list[Shift] = field(default_factory=list)
 
@@ -159,6 +171,7 @@ class SpecificShifts(PlanningConstraint):
 
 @dataclass
 class MaxConsecutiveShifts(PlanningConstraint):
+    employee_ids: list[int] = field(init=False)
     week_days: Sequence[WeekDay] = field(default_factory=lambda: WeekDays)
     periods: list[Period] = field(
         default_factory=lambda: [period for period in DayAndEvening]
@@ -190,6 +203,7 @@ class MaxConsecutiveShifts(PlanningConstraint):
 
 @dataclass
 class MaxRecurrentShifts(PlanningConstraint):
+    employee_ids: list[int] = field(init=False)
     week_days: list[WeekDay] = field(default_factory=lambda: [6, 7])
     periods: list[Period] = field(
         default_factory=lambda: [period for period in DayAndEvening]

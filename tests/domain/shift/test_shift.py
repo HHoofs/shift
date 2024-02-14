@@ -13,6 +13,12 @@ from shift.domain.shifts.shift import (
 )
 
 
+def test_model():
+    shift = Shift(DayAndEvening.day, Day(date(2021, 1, 1)))
+    assert shift.entity == "Shift"
+    assert str(shift) == "day shift on Friday 1 January (week: 53)"
+
+
 @pytest.mark.parametrize(
     "start,end,length",
     [
