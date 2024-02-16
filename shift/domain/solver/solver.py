@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from itertools import product
 from typing import Iterable, Optional, Sequence
 
@@ -15,29 +15,30 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 @dataclass
 class Solver(Model):
     planning_id: int
+    employee_ids: InitVar[Iterable[int]]
+    shifts: InitVar[Iterable[Shift]]
     optimization: Optional[PlanningOptimization] = None
     model: cp_model.CpModel = field(default_factory=cp_model.CpModel())
     employee_slots: dict[EmployeeSlot, cp_model.IntVar] = field(
-        default_factory=dict
+        init=False, default_factory=dict
     )
-    added_constraints: list[int] = field(default_factory=list)
-    added_distributions: list[int] = field(default_factory=list)
 
-    def add_slots(
+    def __post_init__(
         self, employee_ids: Iterable[int], shifts: Iterable[Shift]
-    ) -> None:
-        for employee_id, shift in product(employee_ids, shifts):
+    ):
+        for employee_id, shift in self._get_slots(employee_ids, shifts):
             self.employee_slots[
                 get_key(employee_id, shift)
-            ] = self._get_employee_slot(self.model, employee_id, shift)
+            ] = self.model.NewBoolVar(
+                f"Slot <Employee: {employee_id}; Shift: {shift}"
+            )
 
     @staticmethod
-    def _get_employee_slot(
-        model: cp_model.CpModel, employee_id: int, shift: Shift
-    ) -> cp_model.IntVar:
-        return model.NewBoolVar(
-            f"Slot <Employee: {employee_id}; Shift: {shift}"
-        )
+    def _get_slots(
+        employee_ids: Iterable[int], shifts: Iterable[Shift]
+    ) -> Iterable[tuple[int, Shift]]:
+        for employee_id, shift in product(employee_ids, shifts):
+            yield employee_id, shift
 
     def add_constraints(
         self, constraints: Iterable[PlanningConstraint], slots: Sequence[Slot]

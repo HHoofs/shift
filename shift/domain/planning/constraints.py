@@ -147,8 +147,8 @@ class ShiftsPerDay(Model):
 @dataclass
 class SpecificShifts(PlanningConstraint):
     employee_ids: list[int] = field(init=False)
-    blocked: bool = True
     shifts: list[Shift] = field(default_factory=list)
+    blocked: bool = True
 
     def add_constraint(
         self,

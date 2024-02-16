@@ -19,13 +19,18 @@ class Planning(Model):
     constraints: list[PlanningConstraint] = field(default_factory=list)
     distributions: list[Distributions] = field(default_factory=list)
 
-    def get_slots(self) -> Iterable[Slot]:
+    @property
+    def shifts(self) -> Iterable[Shift]:
         first_shift = Shift(min(self.periods), Day(self.first_day))
         last_shift = Shift(max(self.periods), Day(self.last_day))
 
         for shift in shift_range(
             first_shift, last_shift, periods=self.periods, inclusive=True
         ):
+            yield shift
+
+    def get_slots(self) -> Iterable[Slot]:
+        for shift in self.shifts:
             yield Slot(
                 period=shift.period,
                 day=shift.day,
