@@ -81,13 +81,15 @@ def employee_ids() -> list[int]:
 
 @fixture
 def employee_slots_1week(
-    shifts_1week: list[Shift], employee_ids: list[int], model: cp_model.CpModel
+    slots_1week: list[Slot], employee_ids: list[int], model: cp_model.CpModel
 ) -> dict[EmployeeSlot, cp_model.IntVar]:
     employee_slots = {
         (employee_id, shift): model.NewBoolVar(
             f"Slot <Employee: {employee_id}; Shift: {shift}"
         )
-        for employee_id, shift in Solver._get_slots(employee_ids, shifts_1week)
+        for employee_id, shift in Solver._get_employee_slots(
+            employee_ids, slots_1week
+        )
     }
     return employee_slots
 

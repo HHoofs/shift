@@ -1,6 +1,6 @@
 from dataclasses import InitVar, dataclass, field
 from itertools import product
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Optional
 
 from ortools.sat.python import cp_model  # type: ignore
 
@@ -16,7 +16,7 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 class Solver(Model):
     planning_id: int
     employee_ids: InitVar[Iterable[int]]
-    shifts: InitVar[Iterable[Shift]]
+    slots: InitVar[Iterable[Slot]]
     optimization: Optional[PlanningOptimization] = None
     model: cp_model.CpModel = field(default_factory=cp_model.CpModel())
     employee_slots: dict[EmployeeSlot, cp_model.IntVar] = field(
@@ -24,9 +24,12 @@ class Solver(Model):
     )
 
     def __post_init__(
-        self, employee_ids: Iterable[int], shifts: Iterable[Shift]
+        self, employee_ids: Iterable[int], slots: Iterable[Slot]
     ):
-        for employee_id, shift in self._get_slots(employee_ids, shifts):
+        self._slots = slots
+        for employee_id, shift in self._get_employee_slots(
+            employee_ids, slots
+        ):
             self.employee_slots[
                 get_key(employee_id, shift)
             ] = self.model.NewBoolVar(
@@ -34,30 +37,30 @@ class Solver(Model):
             )
 
     @staticmethod
-    def _get_slots(
-        employee_ids: Iterable[int], shifts: Iterable[Shift]
+    def _get_employee_slots(
+        employee_ids: Iterable[int], slots: Iterable[Slot]
     ) -> Iterable[tuple[int, Shift]]:
-        for employee_id, shift in product(employee_ids, shifts):
-            yield employee_id, shift
+        for employee_id, slot in product(employee_ids, slots):
+            yield employee_id, slot.shift
 
     def add_constraints(
-        self, constraints: Iterable[PlanningConstraint], slots: Sequence[Slot]
+        self,
+        constraints: Iterable[PlanningConstraint],
     ) -> None:
         for constraint in constraints:
             constraint.add_constraint(
                 model=self.model,
                 employee_slots=self.employee_slots,
-                slots=slots,
+                slots=self._slots,
             )
 
     def add_distributions(
         self,
         distributions: Iterable[PlanningDistribution],
-        slots: Sequence[Slot],
     ) -> None:
         for distribution in distributions:
             distribution.add_distribution(
                 model=self.model,
                 employee_slots=self.employee_slots,
-                slots=slots,
+                slots=list(self._slots),
             )
