@@ -2,8 +2,11 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Iterable
 
-from shift.domain.planning.constraints import PlanningConstraint
-from shift.domain.planning.distributions import Distributions
+from shift.domain.planning.constraints import Constraints, PlanningConstraint
+from shift.domain.planning.distributions import (
+    Distributions,
+    PlanningDistribution,
+)
 from shift.domain.shifts.shift import Day, Period, Shift, Slot, shift_range
 from shift.domain.utils.model import Model
 
@@ -15,9 +18,9 @@ class Planning(Model):
     periods: Iterable[Period]
     shift_duration: int
     employees_per_shift: int
-    employee_ids: list[int] = field(default_factory=list)
-    constraints: list[PlanningConstraint] = field(default_factory=list)
-    distributions: list[Distributions] = field(default_factory=list)
+    employee_hours: dict[int, int] = field(default_factory=dict)
+    constraints: Constraints = field(default_factory=Constraints)
+    distributions: Distributions = field(default_factory=Distributions)
 
     @property
     def shifts(self) -> Iterable[Shift]:
@@ -29,7 +32,12 @@ class Planning(Model):
         ):
             yield shift
 
-    def get_slots(self) -> Iterable[Slot]:
+    @property
+    def employee_ids(self) -> list[int]:
+        return [employee_id for employee_id in self.employee_hours.keys()]
+
+    @property
+    def slots(self) -> Iterable[Slot]:
         for shift in self.shifts:
             yield Slot(
                 period=shift.period,
@@ -37,3 +45,11 @@ class Planning(Model):
                 duration=self.shift_duration,
                 n_employees=self.employees_per_shift,
             )
+
+    def retrieve_constraints(self) -> Iterable[PlanningConstraint]:
+        return iter(self.constraints)
+
+    def retrieve_distributions(self) -> Iterable[PlanningDistribution]:
+        for distribution in self.distributions:
+            distribution.employee_hours = self.employee_hours
+            yield distribution

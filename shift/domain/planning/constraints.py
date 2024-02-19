@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import groupby
 from typing import (
@@ -76,6 +77,11 @@ class Constraints(Model):
         yield from self.specific_shifts
         yield from self.max_consecutive_shifts
         yield from self.max_recurrent_shifts
+
+    def lost_hours(self, shifts: list[Shift]):
+        _lost_hours: dict[int, int] = defaultdict(int)
+        for specific_shift in self.specific_shifts:
+            ...
 
 
 class PlanningConstraint(Protocol):

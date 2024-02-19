@@ -26,9 +26,10 @@ class Solver(Model):
     def __post_init__(
         self, employee_ids: Iterable[int], slots: Iterable[Slot]
     ):
-        self._slots = slots
+        self._slots = list(slots)
+
         for employee_id, shift in self._get_employee_slots(
-            employee_ids, slots
+            employee_ids, self._slots
         ):
             self.employee_slots[
                 get_key(employee_id, shift)

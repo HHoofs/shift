@@ -1,5 +1,5 @@
 import pytest
-from google.protobuf.json_format import MessageToDict
+from google.protobuf.json_format import MessageToDict  # type: ignore
 
 from shift.domain.shifts.shift import Slot
 from shift.domain.solver.optimizers import PlanningOptimization

@@ -1,6 +1,6 @@
 import pytest  # type: ignore
-from google.protobuf.json_format import MessageToDict
-from ortools.sat.python import cp_model
+from google.protobuf.json_format import MessageToDict  # type: ignore
+from ortools.sat.python import cp_model  # type: ignore
 
 from shift.domain.planning.constraints import (
     Constraints,
@@ -96,3 +96,37 @@ def test_max_recurrent_shifts(
             for var_idx in constraint["linear"]["vars"]
         )
         assert int(constraint["linear"]["domain"][1]) == max
+
+
+def test_specific_shifts(
+    employee_ids: list[int],
+    slots_1week: list[Slot],
+    model: cp_model,
+    employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+    slot_t0: Slot,
+    slot_t1_delta_1week: Slot,
+):
+    block_first_shift = SpecificShifts(shifts=[slot_t0.shift])
+    block_first_shift.employee_ids = [employee_ids[0]]
+
+    block_last_shift = SpecificShifts(shifts=[slot_t1_delta_1week.shift])
+    block_last_shift.employee_ids = [employee_ids[-1]]
+
+    block_first_shift.add_constraint(slots_1week, model, employee_slots_1week)
+    block_last_shift.add_constraint(slots_1week, model, employee_slots_1week)
+
+    initialized_model = MessageToDict(model.Proto())
+    constraints = initialized_model["constraints"]
+
+    assert len(constraints) == 2
+
+    first_shift_constraint = constraints[0]["linear"]
+    assert first_shift_constraint["vars"] == [0]
+    assert max(map(int, first_shift_constraint["domain"][1])) == 0
+
+    last_shift_constraint = constraints[1]["linear"]
+    # Find max potential index
+    assert last_shift_constraint["vars"] == [
+        len(initialized_model["variables"]) - 1
+    ]
+    assert max(map(int, last_shift_constraint["domain"][1])) == 0

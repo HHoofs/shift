@@ -106,9 +106,9 @@ def test_consecutive_shifts(slots_4months: list[Slot]):
         get_consecutive_shifts(slots_4months, week_days=(6, 7), n=2)
     )
 
-    for consecutive_slots in weekend_consecutive_slots:
-        assert all(slot.day.week_day in (6, 7) for slot in consecutive_slots)
+    for slots in weekend_consecutive_slots:
+        assert all(slot.day.week_day in (6, 7) for slot in slots)
         assert not (
-            consecutive_slots[0].day.week_day == 7
-            and consecutive_slots[0].period == DayAndEvening.evening
+            slots[0].day.week_day == 7
+            and slots[0].period == DayAndEvening.evening
         )

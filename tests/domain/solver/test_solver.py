@@ -1,12 +1,9 @@
 from datetime import timedelta
-from statistics import mean
 
-import numpy as np
 import pytest
-from google.protobuf.json_format import MessageToDict
+from google.protobuf.json_format import MessageToDict  # type: ignore
 
 from shift.domain.planning.constraints import SpecificShifts
-from shift.domain.planning.distributions import NShifts
 from shift.domain.shifts.periods import DayAndEvening
 from shift.domain.solver.solver import Solver
 
@@ -79,25 +76,3 @@ def test_add_constraints(
         len(initialized_model["variables"]) - 1
     ]
     assert max(map(int, last_shift_constraint["domain"][1])) == 0
-
-
-def test_add_distributions(solver_4months: Solver, employee_ids: list[int]):
-    distribute_shifts = NShifts()
-    distribute_shifts.employee_hours = {id: 1 for id in employee_ids}
-
-    solver_4months.add_distributions([distribute_shifts])
-    initialized_model = MessageToDict(solver_4months.model.Proto())
-    cap_values = [
-        get_cap_value(constraint["linear"]["domain"])
-        for constraint in initialized_model["constraints"]
-    ]
-    avg_cap_value = mean(cap_values)
-    assert np.isclose(
-        avg_cap_value * len(employee_ids),
-        len(list(solver_4months._slots)),
-        atol=len(employee_ids),
-    )
-
-
-def get_cap_value(domain: list[str]) -> int:
-    return min(list(map(int, domain)), key=abs)

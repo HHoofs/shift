@@ -4,7 +4,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from itertools import groupby
 from math import ceil, floor
-from typing import Any, Sequence
+from typing import Any, Iterator, Sequence
 
 from ortools.sat.python import cp_model  # type: ignore
 
@@ -20,12 +20,14 @@ class Distributions(Model):
     n_shifts_monthly: list[NShiftsMonthly] = field(default_factory=list)
 
     def add(self, distribution: PlanningDistribution) -> None:
-        distribution.employee_hours = self.employee_hours
-
         if isinstance(distribution, NShifts):
             self.n_shifts.append(distribution)
         elif isinstance(distribution, NShiftsMonthly):
             self.n_shifts_monthly.append(distribution)
+
+    def __iter__(self) -> Iterator[PlanningDistribution]:
+        yield from self.n_shifts
+        yield from self.n_shifts_monthly
 
 
 @dataclass
