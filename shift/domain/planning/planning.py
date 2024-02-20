@@ -47,7 +47,13 @@ class Planning(Model):
             )
 
     def retrieve_constraints(self) -> Iterable[PlanningConstraint]:
-        return iter(self.constraints)
+        for constraint in self.constraints:
+            constraint.employee_ids = list(
+                set(constraint.employee_ids).intersection(
+                    self.employee_hours.keys()
+                )
+            )
+            yield constraint
 
     def retrieve_distributions(self) -> Iterable[PlanningDistribution]:
         for distribution in self.distributions:

@@ -112,3 +112,16 @@ def test_consecutive_shifts(slots_4months: list[Slot]):
             slots[0].day.week_day == 7
             and slots[0].period == DayAndEvening.evening
         )
+
+
+def test_planned_is_complete(slot_t0: Slot):
+    planned = Planned(slot_t0.period, slot_t0.day, slot_t0.duration)
+    assert not planned.is_complete(2)
+    assert planned.is_complete(0)
+
+    planned.employee_ids = {0, 1}
+    assert planned.is_complete(2)
+    assert planned.is_complete(slot_t0)
+
+    with pytest.raises(TypeError):
+        planned.is_complete(None)  # type: ignore

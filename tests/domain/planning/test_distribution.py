@@ -1,10 +1,33 @@
 import numpy as np
+import pytest  # type: ignore
 from google.protobuf.json_format import MessageToDict  # type: ignore
-from ortools.sat.python import cp_model  # type: ignore
+from ortools.sat.python import cp_model
 
-from shift.domain.planning.distributions import NShifts
+from shift.domain.planning.distributions import (
+    Distributions,
+    NShifts,
+    NShiftsMonthly,
+    PlanningDistribution,
+)
 from shift.domain.shifts.shift import Slot
 from shift.domain.utils.utils import EmployeeSlot
+
+
+def test_distributions():
+    distributions = Distributions()
+    distributions.add(NShifts())
+    distributions.add(NShiftsMonthly())
+
+    for distribution in distributions:
+        assert isinstance(distribution, PlanningDistribution)
+
+
+def test_distribution_base():
+    distribution_base = PlanningDistribution()
+    assert getattr(distribution_base, "add_distribution")
+
+    with pytest.raises(NotImplementedError):
+        distribution_base.add_distribution(None, None, None)  # type: ignore
 
 
 def test_add_distributions(

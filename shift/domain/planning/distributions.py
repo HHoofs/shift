@@ -15,7 +15,6 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 
 @dataclass
 class Distributions(Model):
-    employee_hours: dict[int, int] = field(default_factory=dict)
     n_shifts: list[NShifts] = field(default_factory=list)
     n_shifts_monthly: list[NShiftsMonthly] = field(default_factory=list)
 

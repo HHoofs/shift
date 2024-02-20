@@ -29,7 +29,6 @@ from shift.domain.utils.utils import EmployeeSlot, get_key
 
 @dataclass
 class Constraints(Model):
-    employee_ids: list[int] = field(default_factory=list)
     workers_per_shift: Optional[WorkersPerShift] = field(init=False)
     shifts_per_day: Optional[ShiftsPerDay] = field(init=False)
     specific_shifts: list[SpecificShifts] = field(
@@ -49,8 +48,6 @@ class Constraints(Model):
     ) -> None:
         if employee_ids:
             constraint.employee_ids = employee_ids
-        else:
-            constraint.employee_ids = self.employee_ids
 
         if isinstance(constraint, WorkersPerShift):
             if not getattr(self, "workers_per_shift", None):
@@ -85,7 +82,7 @@ class Constraints(Model):
 
 
 class PlanningConstraint(Protocol):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
 
     def add_constraint(
         self,
@@ -101,7 +98,7 @@ class PlanningConstraint(Protocol):
 
 @dataclass
 class WorkersPerShift(Model):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
 
     def add_constraint(
         self,
@@ -124,7 +121,7 @@ class WorkersPerShift(Model):
 
 @dataclass
 class ShiftsPerDay(Model):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
     n: int = 1
 
     def add_constraint(
@@ -152,7 +149,7 @@ class ShiftsPerDay(Model):
 
 @dataclass
 class SpecificShifts(PlanningConstraint):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
     shifts: list[Shift] = field(default_factory=list)
     blocked: bool = True
 
@@ -177,7 +174,7 @@ class SpecificShifts(PlanningConstraint):
 
 @dataclass
 class MaxConsecutiveShifts(PlanningConstraint):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
     week_days: Sequence[WeekDay] = field(default_factory=lambda: WeekDays)
     periods: list[Period] = field(
         default_factory=lambda: [period for period in DayAndEvening]
@@ -209,7 +206,7 @@ class MaxConsecutiveShifts(PlanningConstraint):
 
 @dataclass
 class MaxRecurrentShifts(PlanningConstraint):
-    employee_ids: list[int] = field(init=False)
+    employee_ids: Sequence[int] = field(init=False)
     week_days: list[WeekDay] = field(default_factory=lambda: [6, 7])
     periods: list[Period] = field(
         default_factory=lambda: [period for period in DayAndEvening]

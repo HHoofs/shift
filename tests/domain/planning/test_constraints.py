@@ -16,8 +16,7 @@ from shift.domain.utils.utils import EmployeeSlot
 
 
 def test_constraint_model(employee_ids: list[int]):
-    constraints = Constraints(employee_ids)
-    assert constraints.employee_ids == employee_ids
+    constraints = Constraints()
     assert constraints.entity == "Constraints"
     with pytest.raises(AttributeError):
         assert str(constraints)
@@ -56,7 +55,7 @@ def test_constraint_add(
     max_consecutive_shifts: PlanningConstraint,
     max_recurrent_shifts: PlanningConstraint,
 ):
-    constraints = Constraints(employee_ids)
+    constraints = Constraints()
 
     constraints.add(workers_per_shift)
     constraints.add(shifts_per_day)
