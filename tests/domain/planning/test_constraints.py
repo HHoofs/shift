@@ -1,3 +1,5 @@
+import re
+
 import pytest  # type: ignore
 from google.protobuf.json_format import MessageToDict  # type: ignore
 from ortools.sat.python import cp_model  # type: ignore
@@ -15,7 +17,7 @@ from shift.domain.shifts.shift import Slot
 from shift.domain.utils.utils import EmployeeSlot
 
 
-def test_constraint_model(employee_ids: list[int]):
+def test_constraint_model():
     constraints = Constraints()
     assert constraints.entity == "Constraints"
     with pytest.raises(AttributeError):
@@ -129,3 +131,68 @@ def test_specific_shifts(
         len(initialized_model["variables"]) - 1
     ]
     assert max(map(int, last_shift_constraint["domain"][1])) == 0
+
+
+@pytest.mark.parametrize("n_employees", [1, 2, 20])
+def test_workers_per_shift(
+    slots_1week: list[Slot],
+    model: cp_model,
+    employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+    employee_ids: list[int],
+    n_employees: int,
+):
+    # set number of employees required
+    for slot in slots_1week:
+        slot.n_employees = n_employees
+
+    workers_per_shift = WorkersPerShift()
+    workers_per_shift.employee_ids = employee_ids
+    workers_per_shift.add_constraint(slots_1week, model, employee_slots_1week)
+
+    initialized_model = MessageToDict(model.Proto())
+    constraints = initialized_model["constraints"]
+    variables = initialized_model["variables"]
+
+    constraint = constraints[0]["linear"]
+
+    assert (
+        len(
+            {
+                variables[var]["name"].split("; ")[1]
+                for var in constraint["vars"]
+            }
+        )
+        == 1
+    )
+
+    assert all(int(limit) == n_employees for limit in constraint["domain"])
+
+
+def test_shifts_per_day(
+    slots_1week: list[Slot],
+    model: cp_model,
+    employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+    employee_ids: list[int],
+):
+    shifts_per_day = ShiftsPerDay()
+    shifts_per_day.employee_ids = employee_ids
+    shifts_per_day.add_constraint(slots_1week, model, employee_slots_1week)
+
+    initialized_model = MessageToDict(model.Proto())
+    constraints = initialized_model["constraints"]
+    variables = initialized_model["variables"]
+
+    assert all(
+        key == "atMostOne" and len(value["literals"]) == 2
+        for constraint in constraints
+        for key, value in constraint.items()
+    )
+
+    constraint = constraints[0]["atMostOne"]
+    vars_without_period = set()
+
+    for index in constraint["literals"]:
+        var = variables[index]["name"]
+        var_without_period = re.sub(r" (day|evening) shift on", "", var)
+        vars_without_period.add(var_without_period)
+    assert len(vars_without_period) == 1

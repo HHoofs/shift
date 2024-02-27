@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import groupby
 from typing import (
@@ -75,13 +74,8 @@ class Constraints(Model):
         yield from self.max_consecutive_shifts
         yield from self.max_recurrent_shifts
 
-    def lost_hours(self, shifts: list[Shift]):
-        _lost_hours: dict[int, int] = defaultdict(int)
-        for specific_shift in self.specific_shifts:
-            ...
 
-
-class PlanningConstraint(Protocol):
+class PlanningConstraint(Protocol):  # pragma: no cover
     employee_ids: Sequence[int] = field(init=False)
 
     def add_constraint(
@@ -122,7 +116,15 @@ class WorkersPerShift(Model):
 @dataclass
 class ShiftsPerDay(Model):
     employee_ids: Sequence[int] = field(init=False)
-    n: int = 1
+
+    @property
+    def n(self) -> int:
+        """Max number of shifts per day for an employee
+
+        Returns:
+            Number of shifts
+        """
+        return 1
 
     def add_constraint(
         self,
@@ -133,17 +135,15 @@ class ShiftsPerDay(Model):
             cp_model.IntVar,
         ],
     ) -> None:
-        if self.n != 1:
-            raise
-
-        for day, _slots in groupby(
+        for _, _slots in groupby(
             slots,
             key=lambda slot: slot.day,
         ):
+            day_slots = list(_slots)
             for employee_id in self.employee_ids:
                 model.AddAtMostOne(
                     employee_slots[get_key(employee_id, _slot.shift)]
-                    for _slot in _slots
+                    for _slot in day_slots
                 )
 
 

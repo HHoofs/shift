@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, timedelta
 from enum import IntEnum
 from functools import cached_property
 from typing import Iterable, Iterator, Optional, Union
 
 from shift.domain.shifts.days import WeekDay
-from shift.domain.shifts.periods import Period
+from shift.domain.shifts.periods import DayAndEvening, Period
 from shift.domain.shifts.shift import Day, Shift, shift_range
 from shift.domain.utils.model import Model
 
@@ -59,20 +57,21 @@ class Specifications(Model):
             if (spec_type := specification.spec_for_shift(shift))
         )
 
-    def blocked_days(
-        self, start_day: Day, end_day: Day
-    ) -> dict[date, list[Day]]:
-        blocked_days = defaultdict(list)
-        day = start_day
-        while day <= end_day:
-            if all(
-                self.min_for_shift(Shift(period, day))
-                is SpecType.UNAVAILABLE_COR
-                for period in Period
-            ):
-                blocked_days[day.date.replace(day=1)].append(day)
-            day = Day(day.date + timedelta(days=1))
-        return blocked_days
+    def blocked_shifts(
+        self, from_shift: Shift, to_shift: Shift
+    ) -> list[Shift]:
+        blocked_shifts = []
+        for shift in shift_range(from_shift, to_shift, periods=DayAndEvening):
+            if self.min_for_shift(shift) is SpecType.UNAVAILABLE_COR:
+                blocked_shifts.append(shift)
+        return blocked_shifts
+
+    def blocked_days(self, from_day: Day, to_day: Day) -> list[Day]:
+        blocked_shifts = self.blocked_shifts(
+            Shift(min(DayAndEvening), from_day),
+            Shift(max(DayAndEvening), to_day),
+        )
+        return list({blocked_shift.day for blocked_shift in blocked_shifts})
 
 
 @dataclass
