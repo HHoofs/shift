@@ -107,10 +107,12 @@ def test_specific_shifts(
     slot_t0: Slot,
     slot_t1_delta_1week: Slot,
 ):
-    block_first_shift = SpecificShifts(shifts=[slot_t0.shift])
+    block_first_shift = SpecificShifts(specific_shifts=[(slot_t0.shift, True)])
     block_first_shift.employee_ids = [employee_ids[0]]
 
-    block_last_shift = SpecificShifts(shifts=[slot_t1_delta_1week.shift])
+    block_last_shift = SpecificShifts(
+        specific_shifts=[(slot_t1_delta_1week.shift, True)]
+    )
     block_last_shift.employee_ids = [employee_ids[-1]]
 
     block_first_shift.add_constraint(slots_1week, model, employee_slots_1week)
@@ -196,3 +198,14 @@ def test_shifts_per_day(
         var_without_period = re.sub(r" (day|evening) shift on", "", var)
         vars_without_period.add(var_without_period)
     assert len(vars_without_period) == 1
+
+
+# def test_specific_shifts(
+#     slots_1week: list[Slot],
+#     model: cp_model,
+#     employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+#     employee_ids: list[int],
+# ):
+#     shifts_per_day = SpecificShifts()
+#     shifts_per_day.employee_ids = employee_ids[:1]
+#     shifts_per_day.add_constraint(slots_1week, model, employee_slots_1week)

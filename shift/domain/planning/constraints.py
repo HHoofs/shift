@@ -43,7 +43,7 @@ class Constraints(Model):
     def add(
         self,
         constraint: PlanningConstraint,
-        employee_ids: Optional[list[int]] = None,
+        employee_ids: Optional[Sequence[int]] = None,
     ) -> None:
         if employee_ids:
             constraint.employee_ids = employee_ids
@@ -150,8 +150,7 @@ class ShiftsPerDay(Model):
 @dataclass
 class SpecificShifts(PlanningConstraint):
     employee_ids: Sequence[int] = field(init=False)
-    shifts: list[Shift] = field(default_factory=list)
-    blocked: bool = True
+    specific_shifts: list[tuple[Shift, bool]] = field(default_factory=list)
 
     def add_constraint(
         self,
@@ -159,17 +158,22 @@ class SpecificShifts(PlanningConstraint):
         model: CpModel,
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
-        for employee_id in self.employee_ids:
-            _employee_slots = (
-                employee_slots[get_key(employee_id, slot.shift)]
-                for slot in slots
-                if slot.shift in self.shifts
-            )
-            if self.blocked:
-                model.Add(sum(_employee_slots) <= 0)
+        if len(self.employee_ids) != 1:
+            raise
+        employee_id = self.employee_ids[0]
+
+        specific_shifts = filter(
+            lambda specific_shift: specific_shift[0]
+            in [slot.shift for slot in slots],
+            self.specific_shifts,
+        )
+
+        for shift, blocked in specific_shifts:
+            _employee_slot = employee_slots[get_key(employee_id, shift)]
+            if blocked:
+                model.Add(_employee_slot <= 0)
             else:
-                for _employee_slot in _employee_slots:
-                    model.AddExactlyOne(_employee_slot)
+                model.AddExactlyOne(_employee_slot)
 
 
 @dataclass

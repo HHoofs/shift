@@ -54,10 +54,12 @@ def test_add_slots(
 def test_add_constraints(
     solver_1week: Solver, slot_t0, slot_t1_delta_1week, employee_ids
 ):
-    block_first_shift = SpecificShifts(shifts=[slot_t0.shift])
+    block_first_shift = SpecificShifts(specific_shifts=[(slot_t0.shift, True)])
     block_first_shift.employee_ids = [employee_ids[0]]
 
-    block_last_shift = SpecificShifts(shifts=[slot_t1_delta_1week.shift])
+    block_last_shift = SpecificShifts(
+        specific_shifts=[(slot_t1_delta_1week.shift, True)]
+    )
     block_last_shift.employee_ids = [employee_ids[-1]]
 
     solver_1week.add_constraints([block_first_shift, block_last_shift])
