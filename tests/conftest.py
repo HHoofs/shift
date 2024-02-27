@@ -5,7 +5,7 @@ from ortools.sat.python import cp_model  # type: ignore
 from pytest import fixture
 
 from shift.domain.shifts.periods import DayAndEvening
-from shift.domain.shifts.shift import Day, Shift, Slot, shift_range
+from shift.domain.shifts.shift import Day, Slot, shift_range
 from shift.domain.solver.solver import Solver
 from shift.domain.utils.utils import EmployeeSlot
 
@@ -62,16 +62,6 @@ def slots_1week(slot_t0: Slot, slot_t1_delta_1week: Slot) -> list[Slot]:
             Slot(shift.period, shift.day, shift.duration, n_employees=1)
         )
     return _slots
-
-
-@fixture
-def shifts_1week(slot_t0: Slot, slot_t1_delta_1week: Slot) -> list[Shift]:
-    _shifts = []
-    for shift in shift_range(
-        slot_t0, slot_t1_delta_1week, periods=DayAndEvening
-    ):
-        _shifts.append(shift)
-    return _shifts
 
 
 @fixture

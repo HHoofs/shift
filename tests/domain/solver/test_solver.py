@@ -15,12 +15,6 @@ def solver_1week(model, employee_ids, slots_1week) -> Solver:
     return solver
 
 
-@pytest.fixture
-def solver_4months(model, employee_ids, slots_4months) -> Solver:
-    solver = Solver(0, employee_ids, slots_4months, model=model)
-    return solver
-
-
 def test_add_slots(
     solver_1week: Solver,
     employee_ids: list[int],
