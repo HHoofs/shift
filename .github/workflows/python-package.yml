@@ -31,3 +31,6 @@ jobs:
     - name: Run Tox
       run: |
         tox
+    - name: Run Ruff
+      run: |
+        ruff check .
