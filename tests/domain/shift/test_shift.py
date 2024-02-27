@@ -19,6 +19,11 @@ def test_model():
     assert str(shift) == "day shift on Friday 1 January (week: 53)"
 
 
+def test_shift_operator(slot_t0: Slot):
+    with pytest.raises(TypeError):
+        slot_t0.shift < "SlotT0"  # type: ignore
+
+
 @pytest.mark.parametrize(
     "start,end,length",
     [
@@ -125,3 +130,23 @@ def test_planned_is_complete(slot_t0: Slot):
 
     with pytest.raises(TypeError):
         planned.is_complete(None)  # type: ignore
+
+
+def test_planned_repr(slot_t0: Slot):
+    planned = Planned(slot_t0.period, slot_t0.day, slot_t0.duration)
+    assert str(planned) == "planned day shift on Monday 4 February (week: 6)"
+
+    planned_with_employee_ids = Planned(
+        slot_t0.period, slot_t0.day, slot_t0.duration, {1, 2, 3}
+    )
+    assert (
+        str(planned_with_employee_ids)
+        == "planned day shift on Monday 4 February (week: 6), for ids: {1, 2, 3}"
+    )
+
+
+def test_slot_repr(slot_t0: Slot):
+    assert (
+        str(slot_t0)
+        == "slot day shift on Monday 4 February (week: 6), for 1 employee(s)"
+    )

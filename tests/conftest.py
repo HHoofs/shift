@@ -112,3 +112,11 @@ def employee_slots_4months(
 @fixture
 def model() -> cp_model.CpModel:
     return cp_model.CpModel()
+
+
+@fixture
+def get_cap_value():
+    def _get_cap_value(domain: list[str]) -> int:
+        return min(list(map(int, domain)), key=abs)
+
+    return _get_cap_value

@@ -112,7 +112,7 @@ def _distribute_slots(
 
 
 def _get_bounds(value: float, offset: int = 0) -> tuple[int, int]:
-    if value.is_integer():
+    if isinstance(value, int) or value.is_integer():
         return int(value) - offset, int(value) + offset
     else:
         return floor(value) - offset, ceil(value) + offset

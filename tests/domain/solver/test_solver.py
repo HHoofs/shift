@@ -4,6 +4,7 @@ import pytest
 from google.protobuf.json_format import MessageToDict  # type: ignore
 
 from shift.domain.planning.constraints import SpecificShifts
+from shift.domain.planning.distributions import NShifts
 from shift.domain.shifts.periods import DayAndEvening
 from shift.domain.solver.solver import Solver
 
@@ -52,7 +53,11 @@ def test_add_slots(
 
 
 def test_add_constraints(
-    solver_1week: Solver, slot_t0, slot_t1_delta_1week, employee_ids
+    solver_1week: Solver,
+    slot_t0,
+    slot_t1_delta_1week,
+    employee_ids,
+    get_cap_value,
 ):
     block_first_shift = SpecificShifts(specific_shifts=[(slot_t0.shift, True)])
     block_first_shift.employee_ids = [employee_ids[0]]
@@ -70,11 +75,24 @@ def test_add_constraints(
 
     first_shift_constraint = constraints[0]["linear"]
     assert first_shift_constraint["vars"] == [0]
-    assert max(map(int, first_shift_constraint["domain"][1])) == 0
+    assert get_cap_value(first_shift_constraint["domain"]) == 0
 
     last_shift_constraint = constraints[1]["linear"]
     # Find max potential index
     assert last_shift_constraint["vars"] == [
         len(initialized_model["variables"]) - 1
     ]
-    assert max(map(int, last_shift_constraint["domain"][1])) == 0
+    assert get_cap_value(last_shift_constraint["domain"]) == 0
+
+
+def test_add_distributions(
+    solver_1week: Solver,
+    employee_ids,
+):
+    n_shifts = NShifts(offset=1)
+    n_shifts.employee_hours = {id: 1 for id in employee_ids}
+
+    solver_1week.add_distributions([n_shifts])
+    initialized_model = MessageToDict(solver_1week.model.Proto())
+    constraints = initialized_model["constraints"]
+    assert len(constraints) == len(employee_ids) * 2

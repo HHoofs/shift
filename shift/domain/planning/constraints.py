@@ -159,7 +159,10 @@ class SpecificShifts(PlanningConstraint):
         employee_slots: dict[EmployeeSlot, IntVar],
     ) -> None:
         if len(self.employee_ids) != 1:
-            raise
+            raise ValueError(
+                f"Specific shifts can only be applied for a single employee, "
+                f"whilst multiple employees were assigned ({self.employee_ids})"
+            )
         employee_id = self.employee_ids[0]
 
         specific_shifts = filter(

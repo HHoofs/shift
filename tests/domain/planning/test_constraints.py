@@ -50,7 +50,6 @@ def max_recurrent_shifts():
 
 
 def test_constraint_add(
-    employee_ids: list[int],
     workers_per_shift: PlanningConstraint,
     shifts_per_day: PlanningConstraint,
     specific_shifts: PlanningConstraint,
@@ -61,7 +60,7 @@ def test_constraint_add(
 
     constraints.add(workers_per_shift)
     constraints.add(shifts_per_day)
-    constraints.add(specific_shifts)
+    constraints.add(specific_shifts, [1])
     constraints.add(max_consecutive_shifts)
     constraints.add(max_recurrent_shifts)
 
@@ -78,6 +77,11 @@ def test_max_recurrent_shifts(
     n_employees: int,
 ):
     max_recurrent_shifts = MaxRecurrentShifts(max=max)
+
+    # check fixed window
+    assert max_recurrent_shifts.window == 2
+
+    # add employees and add constraint
     max_recurrent_shifts.employee_ids = list(range(n_employees))
     max_recurrent_shifts.add_constraint(
         slots_1week, model, employee_slots_1week
@@ -99,6 +103,30 @@ def test_max_recurrent_shifts(
         assert int(constraint["linear"]["domain"][1]) == max
 
 
+@pytest.mark.parametrize("max", [1, 2, 10])
+@pytest.mark.parametrize("window", [1, 2, 10])
+def test_max_consecutive_shifts(
+    slots_1week: list[Slot],
+    model: cp_model.CpModel,
+    employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+    max: int,
+    window: int,
+    get_cap_value,
+):
+    max_recurrent_shifts = MaxConsecutiveShifts(max=max, window=window)
+    max_recurrent_shifts.employee_ids = [0]
+    max_recurrent_shifts.add_constraint(
+        slots_1week, model, employee_slots_1week
+    )
+
+    constrained_model = MessageToDict(model.Proto())
+    constraints = constrained_model["constraints"]
+
+    for constraint in constraints:
+        assert len(constraint["linear"]["vars"]) == window
+        assert get_cap_value(constraint["linear"]["domain"]) == max
+
+
 def test_specific_shifts(
     employee_ids: list[int],
     slots_1week: list[Slot],
@@ -106,12 +134,13 @@ def test_specific_shifts(
     employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
     slot_t0: Slot,
     slot_t1_delta_1week: Slot,
+    get_cap_value,
 ):
     block_first_shift = SpecificShifts(specific_shifts=[(slot_t0.shift, True)])
     block_first_shift.employee_ids = [employee_ids[0]]
 
     block_last_shift = SpecificShifts(
-        specific_shifts=[(slot_t1_delta_1week.shift, True)]
+        specific_shifts=[(slot_t1_delta_1week.shift, False)]
     )
     block_last_shift.employee_ids = [employee_ids[-1]]
 
@@ -125,14 +154,29 @@ def test_specific_shifts(
 
     first_shift_constraint = constraints[0]["linear"]
     assert first_shift_constraint["vars"] == [0]
-    assert max(map(int, first_shift_constraint["domain"][1])) == 0
+    assert get_cap_value(first_shift_constraint["domain"]) == 0
 
-    last_shift_constraint = constraints[1]["linear"]
+    last_shift_constraint = constraints[1]["exactlyOne"]
     # Find max potential index
-    assert last_shift_constraint["vars"] == [
+    assert last_shift_constraint["literals"] == [
         len(initialized_model["variables"]) - 1
     ]
-    assert max(map(int, last_shift_constraint["domain"][1])) == 0
+
+
+def test_specific_shifts_multiple_employees(
+    employee_ids: list[int],
+    slots_1week: list[Slot],
+    model: cp_model,
+    employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
+    slot_t0: Slot,
+):
+    block_first_shift = SpecificShifts(specific_shifts=[(slot_t0.shift, True)])
+    block_first_shift.employee_ids = employee_ids[0:3]
+
+    with pytest.raises(ValueError):
+        block_first_shift.add_constraint(
+            slots_1week, model, employee_slots_1week
+        )
 
 
 @pytest.mark.parametrize("n_employees", [1, 2, 20])
@@ -199,13 +243,5 @@ def test_shifts_per_day(
         vars_without_period.add(var_without_period)
     assert len(vars_without_period) == 1
 
-
-# def test_specific_shifts(
-#     slots_1week: list[Slot],
-#     model: cp_model,
-#     employee_slots_1week: dict[EmployeeSlot, cp_model.IntVar],
-#     employee_ids: list[int],
-# ):
-#     shifts_per_day = SpecificShifts()
-#     shifts_per_day.employee_ids = employee_ids[:1]
-#     shifts_per_day.add_constraint(slots_1week, model, employee_slots_1week)
+    # check fixed property (only work one time a day)
+    assert shifts_per_day.n == 1
