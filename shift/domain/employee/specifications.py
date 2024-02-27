@@ -68,8 +68,8 @@ class Specifications(Model):
 
     def blocked_days(self, from_day: Day, to_day: Day) -> list[Day]:
         blocked_shifts = self.blocked_shifts(
-            Shift(min(DayAndEvening), from_day),  # type: ignore
-            Shift(max(DayAndEvening), to_day),  # type: ignore
+            Shift(min(DayAndEvening), from_day),
+            Shift(max(DayAndEvening), to_day),
         )
         return list({blocked_shift.day for blocked_shift in blocked_shifts})
 
