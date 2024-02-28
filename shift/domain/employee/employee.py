@@ -1,21 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 from shift.domain.utils.model import Model
 
 
-@dataclass(repr=True)
+@dataclass
 class Employee(Model):
     name: str
     contract_hours: int
-    specification_id: int
-    events: list = []
+    specification_id: Optional[int] = None
 
     def __repr__(self) -> str:
         return self.name
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Employee):
-            return NotImplemented
-        return self.id == other.id

@@ -51,11 +51,14 @@ class Specifications(Model):
         yield from self.holidays
 
     def min_for_shift(self, shift: Shift) -> Optional[SpecType]:
-        return min(
-            spec_type
-            for specification in self
-            if (spec_type := specification.spec_for_shift(shift))
-        )
+        try:
+            return min(
+                spec_type
+                for specification in self
+                if (spec_type := specification.spec_for_shift(shift))
+            )
+        except ValueError:
+            return None
 
     def blocked_shifts(
         self, from_shift: Shift, to_shift: Shift
@@ -78,7 +81,7 @@ class Specifications(Model):
 class Specification(Model, ABC):
     spec_type: SpecType
 
-    @abstractmethod
+    @abstractmethod  # pragma: no cover
     def spec_for_shift(self, shift: Shift) -> Optional[SpecType]:
         raise NotImplementedError
 
@@ -125,15 +128,20 @@ class Holiday(Model):
         return self.spec_type if shift in self.shifts else None
 
     @cached_property
-    def shifts(self) -> Iterable[Shift]:
+    def shifts(self) -> list[Shift]:
         periods = self.first_shift.period.__class__
-        if not isinstance(self.last_shift, periods):
+        if not isinstance(self.last_shift.period, periods):
             raise ValueError(
                 "The first and last shift should be specified using the same periods"
             )
 
-        return shift_range(
-            self.first_shift, self.last_shift, periods=periods, inclusive=True
+        return list(
+            shift_range(
+                self.first_shift,
+                self.last_shift,
+                periods=periods,
+                inclusive=True,
+            )
         )
 
     @property

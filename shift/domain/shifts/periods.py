@@ -1,20 +1,10 @@
 from __future__ import annotations
 
-from enum import Flag
+from enum import IntEnum
 
 
-class Period(Flag):
+class Period(IntEnum):
     ...
-
-    def __lt__(self, other: Period) -> bool:
-        if not isinstance(other, Period):
-            return NotImplemented
-        return self.value < other.value
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Period):
-            return NotImplemented
-        return self.value == other.value
 
     def __hash__(self) -> int:
         return super().__hash__()
